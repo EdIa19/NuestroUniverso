@@ -2654,6 +2654,7 @@ async function loadConfig(){
   if(data){
     loadSavedTheme();
     updateDaysCounter();
+      loadAchievements();
     // Actualizar nombre en hero si está configurado
     if(data.couple_name){
       const el = document.querySelector('.hero-eye');
@@ -2683,6 +2684,7 @@ async function saveConfig(){
   toast('Configuración guardada ♥');
   closeMod('mConfig');
   await loadConfig();
+  await loadAchievements();
   updateDaysCounter();
 }
 
