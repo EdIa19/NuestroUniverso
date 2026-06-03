@@ -1,0 +1,3602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuestro Universo ❤️</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>❤️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════ */
+:root{
+  --wine:#5C0A1E;      --crimson:#8B0000;    --rose:#C9526A;
+  --blush:#E8A0A8;     --cream:#FDF6F0;      --ivory:#F5EDE0;
+  --charcoal:#181118;  --dark:#0A0508;       --muted:#8A7070;
+  --gold:#C9A96E;      --green:#4CAF50;
+  --glass:rgba(255,255,255,.036);
+  --glass-md:rgba(255,255,255,.06);
+  --glass-hi:rgba(255,255,255,.09);
+  --border:rgba(201,82,106,.15);
+  --border-hi:rgba(201,82,106,.38);
+  --sh:0 8px 40px rgba(0,0,0,.65);
+  --sh-glow:0 0 60px rgba(201,82,106,.12);
+  --sh-card:0 2px 12px rgba(0,0,0,.4);
+  --r:2px;
+  --ease:.32s cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--dark);color:var(--cream);
+  font-family:'Jost',sans-serif;font-weight:300;
+  min-height:100vh;overflow-x:hidden;
+}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--wine);}
+a{color:inherit;text-decoration:none;}
+button{font-family:'Jost',sans-serif;cursor:pointer;}
+input,textarea,select{font-family:'Jost',sans-serif;}
+
+/* ═══════════════════════════════════════════════════
+   KEYFRAMES
+═══════════════════════════════════════════════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes fall{0%{opacity:0;transform:translateY(-12px)rotate(0)}8%{opacity:.55}90%{opacity:.15}100%{opacity:0;transform:translateY(110vh)rotate(680deg)}}
+@keyframes linePulse{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes hbGlow{0%,100%{transform:scale(1);filter:drop-shadow(0 0 8px rgba(201,82,106,.38))}50%{transform:scale(1.13);filter:drop-shadow(0 0 28px rgba(201,82,106,.85))}}
+@keyframes hbeat{0%,100%{transform:scale(1)}14%{transform:scale(1.18)}28%{transform:scale(1)}42%{transform:scale(1.09)}70%{transform:scale(1)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+@keyframes reveal{from{opacity:0;filter:blur(10px);transform:translateY(6px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}
+@keyframes dotPop{0%{transform:scale(0);opacity:0}65%{transform:scale(1.3)}100%{transform:scale(1);opacity:1}}
+@keyframes shimmer{0%{background-position:-300% 0}100%{background-position:300% 0}}
+@keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════════════════════════
+   LOADER ROMÁNTICO GLOBAL
+═══════════════════════════════════════════════════ */
+#loader{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--dark);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+  transition:opacity .7s ease;
+}
+#loader.out{opacity:0;pointer-events:none;}
+.ld-heart{
+  font-size:3.6rem;animation:hbGlow 1.5s ease infinite;line-height:1;
+  filter:drop-shadow(0 0 20px rgba(201,82,106,.5));
+}
+.ld-text{
+  font-size:.57rem;letter-spacing:.52em;text-transform:uppercase;
+  color:var(--muted);opacity:.65;
+}
+
+/* ═══════════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════════ */
+#authScreen{
+  display:none;min-height:100vh;
+  align-items:center;justify-content:center;padding:20px;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 35%,rgba(92,10,30,.6) 0%,transparent 65%),
+    radial-gradient(ellipse 40% 40% at 5% 90%,rgba(139,0,0,.2) 0%,transparent 60%),
+    var(--dark);
+}
+#authScreen.vis{display:flex;}
+.auth-card{
+  width:100%;max-width:420px;
+  background:rgba(255,255,255,.032);
+  border:1px solid var(--border);
+  padding:54px 42px 46px;position:relative;
+  box-shadow:var(--sh),var(--sh-glow);
+  animation:fadeUp .8s ease both;
+  backdrop-filter:blur(12px);
+}
+.auth-card::before{
+  content:'♥';position:absolute;top:-24px;left:50%;transform:translateX(-50%);
+  font-size:3rem;color:var(--rose);
+  text-shadow:0 0 32px rgba(201,82,106,.75),0 0 70px rgba(201,82,106,.3);
+  animation:hbGlow 3s ease infinite;
+}
+.auth-logo{
+  font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-style:italic;
+  color:var(--blush);text-align:center;margin-bottom:6px;
+  text-shadow:0 0 40px rgba(232,160,168,.2);
+}
+.auth-sub{
+  font-size:.6rem;letter-spacing:.28em;color:var(--muted);
+  text-align:center;text-transform:uppercase;margin-bottom:38px;
+}
+.auth-tabs{display:flex;margin-bottom:28px;border-bottom:1px solid var(--border);}
+.auth-tab{
+  flex:1;padding:10px;text-align:center;font-size:.67rem;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+  transition:color var(--ease);border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.auth-tab.active{color:var(--rose);border-bottom-color:var(--rose);}
+.field{margin-bottom:16px;}
+.field label{
+  display:block;font-size:.57rem;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--rose);margin-bottom:7px;
+}
+.field input,.field select,.field textarea{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);
+  color:var(--cream);padding:12px 16px;font-size:.85rem;
+  outline:none;transition:border-color var(--ease),background var(--ease),box-shadow var(--ease);
+  border-radius:var(--r);
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--rose);background:rgba(201,82,106,.04);
+  box-shadow:0 0 0 3px rgba(201,82,106,.08);
+}
+.field select option{background:var(--charcoal);}
+.btn-p{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--wine),var(--crimson));
+  border:none;color:var(--cream);font-size:.71rem;
+  letter-spacing:.3em;text-transform:uppercase;
+  transition:all var(--ease);margin-top:8px;border-radius:var(--r);
+  position:relative;overflow:hidden;
+}
+.btn-p::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+  transform:translateX(-100%);transition:transform .6s;
+}
+.btn-p:hover::after{transform:translateX(100%);}
+.btn-p:hover{filter:brightness(1.18);box-shadow:0 6px 28px rgba(139,0,0,.45);}
+.btn-p:disabled{opacity:.42;cursor:not-allowed;}
+.auth-err{font-size:.72rem;margin-top:10px;text-align:center;color:#ff6b6b;min-height:18px;transition:color .3s;}
+
+/* couple opts */
+.co-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.co-opt{
+  padding:16px 12px;border:1px solid var(--border);
+  text-align:center;transition:all var(--ease);border-radius:var(--r);
+  background:transparent;
+}
+.co-opt:hover{border-color:var(--rose);background:rgba(201,82,106,.06);}
+.co-opt.active{
+  border-color:var(--rose);background:rgba(201,82,106,.13);
+  box-shadow:inset 0 0 0 1px var(--rose),0 0 20px rgba(201,82,106,.12);
+}
+.co-icon{font-size:1.7rem;display:block;margin-bottom:6px;}
+.co-lbl{font-size:.72rem;color:var(--cream);display:block;}
+.co-sub{font-size:.6rem;color:var(--muted);margin-top:2px;display:block;}
+
+/* ═══════════════════════════════════════════════════
+   APP SHELL & NAV
+═══════════════════════════════════════════════════ */
+#app{display:none;}
+.topnav{
+  position:fixed;top:0;left:0;right:0;z-index:200;height:62px;
+  padding:0 32px;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(8,3,6,.88);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+}
+.nav-brand{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:1.4rem;color:var(--blush);letter-spacing:.04em;
+}
+.nav-center{display:flex;align-items:center;gap:6px;font-size:.64rem;color:var(--muted);}
+.p-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:4px;flex-shrink:0;}
+.p-dot.on{background:var(--green);box-shadow:0 0 8px rgba(76,175,80,.7);}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.nav-btn{
+  position:relative;background:none;border:none;
+  color:var(--cream);font-size:1rem;
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  transition:color var(--ease),opacity var(--ease),background var(--ease);
+  opacity:.7;border-radius:50%;
+}
+.nav-btn:hover{opacity:1;color:var(--rose);background:rgba(201,82,106,.1);}
+.notif-badge{
+  position:absolute;top:4px;right:4px;width:8px;height:8px;
+  background:var(--rose);border-radius:50%;display:none;
+  box-shadow:0 0 10px rgba(201,82,106,.9);animation:hbeat 2.5s ease infinite;
+}
+.nav-name{font-size:.71rem;color:var(--blush);letter-spacing:.05em;}
+.btn-out{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  padding:5px 14px;font-size:.6rem;letter-spacing:.2em;
+  text-transform:uppercase;transition:all var(--ease);border-radius:var(--r);
+}
+.btn-out:hover{border-color:var(--rose);color:var(--rose);}
+
+/* ═══════════════════════════════════════════════════
+   HERO — PORTADA PRINCIPAL
+═══════════════════════════════════════════════════ */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;padding:80px 20px 100px;
+}
+.hero-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 100% 75% at 50% 40%,rgba(92,10,30,.55) 0%,transparent 62%),
+    radial-gradient(ellipse 45% 55% at 12% 75%,rgba(139,0,0,.22) 0%,transparent 58%),
+    radial-gradient(ellipse 35% 45% at 86% 20%,rgba(201,82,106,.14) 0%,transparent 55%);
+}
+/* partículas de fondo */
+.hero-bg::after{
+  content:'';position:absolute;inset:0;
+  background-image:
+    radial-gradient(circle 1px at 20% 30%,rgba(201,82,106,.4) 0%,transparent 100%),
+    radial-gradient(circle 1px at 75% 60%,rgba(201,82,106,.3) 0%,transparent 100%),
+    radial-gradient(circle 1px at 50% 80%,rgba(232,160,168,.2) 0%,transparent 100%);
+  pointer-events:none;
+}
+#petals{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.petal{position:absolute;top:-14px;animation:fall linear infinite;opacity:0;user-select:none;}
+.hero-content{position:relative;z-index:1;text-align:center;width:100%;max-width:780px;margin:0 auto;}
+.hero-eye{
+  font-size:.59rem;letter-spacing:.44em;text-transform:uppercase;
+  color:var(--rose);margin-bottom:18px;animation:fadeUp 1s ease .2s both;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.hero-eye::before,.hero-eye::after{content:'';flex:1;max-width:60px;height:1px;background:var(--border);}
+.hero-h1{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(3.6rem,10vw,8.5rem);font-weight:300;line-height:.86;
+  color:var(--cream);animation:fadeUp 1s ease .38s both;
+}
+.hero-h1 em{
+  font-style:italic;color:var(--blush);display:block;
+  text-shadow:0 0 60px rgba(232,160,168,.25);
+}
+.hero-date-wrap{margin-top:36px;animation:fadeUp 1s ease .56s both;}
+.hero-date-lbl{font-size:.57rem;letter-spacing:.36em;text-transform:uppercase;color:var(--rose);margin-bottom:6px;}
+.hero-date-val{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.4rem,3.5vw,2.2rem);font-style:italic;color:var(--blush);
+}
+
+/* STATS BAR */
+.hero-stats{
+  display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;
+  margin-top:48px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.022);
+  backdrop-filter:blur(12px);
+  animation:fadeUp 1s ease .74s both;
+  box-shadow:var(--sh-card),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.hstat{
+  padding:18px 30px;text-align:center;border-left:1px solid var(--border);
+  transition:background var(--ease);
+}
+.hstat:first-child{border-left:none;}
+.hstat:hover{background:rgba(201,82,106,.07);}
+.hstat-n{
+  font-family:'Cormorant Garamond',serif;font-size:2rem;font-style:italic;
+  color:var(--blush);display:block;line-height:1;
+  animation:countUp .6s ease both;
+}
+.hstat-l{font-size:.52rem;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin-top:5px;display:block;}
+
+/* PARTNER STATUS */
+.pstatus{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:28px;padding:9px 22px;
+  background:rgba(255,255,255,.026);
+  border:1px solid var(--border);font-size:.71rem;color:var(--muted);
+  animation:fadeUp 1s ease .92s both;transition:all var(--ease);
+  backdrop-filter:blur(8px);border-radius:var(--r);
+}
+.pstatus.on{border-color:rgba(76,175,80,.35);color:rgba(140,215,140,.88);background:rgba(76,175,80,.06);}
+.pstatus-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all var(--ease);}
+.pstatus.on .pstatus-dot{background:var(--green);box-shadow:0 0 8px rgba(76,175,80,.7);animation:hbeat 2.2s ease infinite;}
+
+.scroll-hint{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  animation:fadeUp 1s ease 1.1s both;
+}
+.scroll-hint span{font-size:.54rem;letter-spacing:.36em;text-transform:uppercase;color:var(--muted);opacity:.6;}
+.scroll-line{width:1px;height:38px;background:linear-gradient(to bottom,var(--rose),transparent);animation:linePulse 2.4s ease infinite;}
+
+/* ═══════════════════════════════════════════════════
+   SECTIONS / LAYOUT
+═══════════════════════════════════════════════════ */
+.page-sec{padding:84px 0;border-top:1px solid rgba(201,82,106,.07);}
+.wrap{max-width:940px;margin:0 auto;padding:0 24px;}
+.sec-head{text-align:center;margin-bottom:48px;}
+.sec-eye{
+  font-size:.57rem;letter-spacing:.46em;text-transform:uppercase;
+  color:var(--rose);display:block;margin-bottom:10px;
+}
+.sec-ttl{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.9rem,4vw,2.9rem);font-weight:300;color:var(--cream);
+}
+.sec-ttl em{font-style:italic;color:var(--blush);}
+
+/* TOGGLE SECTIONS */
+.tog-btn{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;padding:20px 28px;
+  background:var(--glass);border:1px solid var(--border);
+  color:var(--cream);
+  font-family:'Cormorant Garamond',serif;font-size:1.18rem;font-style:italic;
+  transition:all var(--ease);text-align:left;border-radius:var(--r);
+}
+.tog-btn:hover{border-color:var(--border-hi);background:rgba(201,82,106,.05);}
+.tog-btn.open{border-color:rgba(201,82,106,.32);background:rgba(92,10,30,.18);border-radius:var(--r) var(--r) 0 0;}
+.tog-icon{font-size:.74rem;color:var(--rose);transition:transform var(--ease);font-style:normal;font-family:'Jost',sans-serif;}
+.tog-btn.open .tog-icon{transform:rotate(180deg);}
+.collapse{overflow:hidden;max-height:0;transition:max-height .58s cubic-bezier(.4,0,.2,1);}
+.collapse.open{max-height:6000px;}
+.col-inner{
+  padding:28px;background:rgba(0,0,0,.28);
+  border:1px solid var(--border);border-top:none;
+  border-radius:0 0 var(--r) var(--r);
+}
+
+.add-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 20px;background:none;border:1px solid var(--border);
+  color:var(--rose);font-size:.67rem;letter-spacing:.24em;text-transform:uppercase;
+  transition:all var(--ease);margin-bottom:20px;border-radius:var(--r);
+}
+.add-btn:hover{background:rgba(201,82,106,.08);border-color:var(--border-hi);box-shadow:0 0 14px rgba(201,82,106,.1);}
+
+/* ═══════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════ */
+.moverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.9);
+  z-index:1000;display:none;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(8px);
+}
+.moverlay.open{display:flex;animation:fadeIn .25s ease;}
+.modal{
+  background:linear-gradient(160deg,rgba(28,14,22,.98),rgba(16,8,14,.98));
+  border:1px solid var(--border);
+  width:100%;max-width:520px;max-height:90vh;overflow-y:auto;
+  padding:38px 32px;position:relative;
+  box-shadow:var(--sh),var(--sh-glow),inset 0 1px 0 rgba(255,255,255,.04);
+  animation:fadeUp .32s ease;border-radius:var(--r);
+}
+.m-ttl{
+  font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-style:italic;
+  color:var(--blush);margin-bottom:24px;
+  text-shadow:0 0 30px rgba(232,160,168,.15);
+}
+.m-close{
+  position:absolute;top:14px;right:18px;background:none;border:none;
+  color:var(--muted);font-size:1.3rem;transition:all var(--ease);line-height:1;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+}
+.m-close:hover{color:var(--rose);background:rgba(201,82,106,.1);}
+.btn-row{display:flex;gap:10px;margin-top:12px;}
+.btn-s{
+  flex:1;padding:12px;background:none;border:1px solid var(--border);
+  color:var(--muted);font-size:.67rem;letter-spacing:.18em;
+  text-transform:uppercase;transition:all var(--ease);border-radius:var(--r);
+}
+.btn-s:hover{border-color:var(--muted);color:var(--cream);}
+
+/* INVITE CODE */
+.inv-code{
+  font-size:3rem;letter-spacing:.52em;color:var(--rose);
+  font-family:'Cormorant Garamond',serif;text-align:center;
+  background:rgba(201,82,106,.07);padding:24px;border:1px solid var(--border);
+  margin-bottom:16px;border-radius:var(--r);
+  text-shadow:0 0 24px rgba(201,82,106,.42);
+  box-shadow:inset 0 0 30px rgba(201,82,106,.06);
+}
+
+/* ═══════════════════════════════════════════════════
+   MENSAJES — CARTA ROMÁNTICA + REVEAL
+═══════════════════════════════════════════════════ */
+.msgs-wrap{display:flex;flex-direction:column;gap:16px;}
+.msg-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(145deg,rgba(92,10,30,.25) 0%,rgba(10,5,8,.85) 60%,rgba(139,0,0,.08) 100%);
+  border:1px solid var(--border);
+  box-shadow:var(--sh-card),inset 0 1px 0 rgba(255,255,255,.03);
+  transition:border-color var(--ease),box-shadow var(--ease);
+  border-radius:var(--r);
+}
+.msg-card:hover{
+  border-color:rgba(201,82,106,.34);
+  box-shadow:0 8px 32px rgba(0,0,0,.5),var(--sh-glow);
+}
+.msg-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px 0;
+}
+.msg-badge{
+  font-size:.57rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--rose);background:rgba(201,82,106,.1);
+  padding:3px 10px;border-radius:1px;
+}
+.msg-actions{display:flex;align-items:center;gap:6px;}
+.msg-author{font-size:.6rem;color:var(--muted);}
+.card-act{
+  background:none;border:none;color:var(--muted);
+  font-size:.8rem;transition:color var(--ease);padding:4px 8px;border-radius:var(--r);
+}
+.card-act:hover{color:var(--rose);}
+
+/* REVEAL */
+.reveal-wrap{padding:22px 28px 22px;cursor:pointer;position:relative;user-select:none;}
+.reveal-overlay{
+  position:absolute;inset:0;
+  background:rgba(8,3,6,.72);backdrop-filter:blur(8px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  transition:opacity .55s ease,backdrop-filter .55s ease;z-index:2;
+  border-radius:var(--r);
+}
+.reveal-overlay.gone{opacity:0;pointer-events:none;backdrop-filter:blur(0);}
+.reveal-icon{font-size:1.4rem;animation:hbGlow 2s ease infinite;}
+.reveal-hint{
+  font-size:.62rem;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--blush);opacity:.88;
+}
+.msg-body{position:relative;z-index:1;}
+.msg-quot{
+  font-size:5rem;color:rgba(201,82,106,.09);
+  font-family:'Cormorant Garamond',serif;
+  position:absolute;top:-18px;left:4px;line-height:1;pointer-events:none;
+}
+.msg-text{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1.06rem,2.5vw,1.44rem);font-style:italic;
+  color:var(--cream);line-height:1.72;animation:reveal .55s ease both;
+}
+.msg-sign{
+  font-size:.72rem;color:var(--muted);margin-top:14px;
+  text-align:right;letter-spacing:.09em;
+}
+
+/* ═══════════════════════════════════════════════════
+   MÚSICA — SPOTIFY PREMIUM STYLE
+═══════════════════════════════════════════════════ */
+.songs-list{display:flex;flex-direction:column;gap:2px;}
+.song-row{
+  display:flex;align-items:center;gap:14px;padding:13px 18px;
+  background:var(--glass);border:1px solid rgba(255,255,255,.035);
+  transition:all var(--ease);position:relative;overflow:hidden;
+  border-radius:var(--r);
+}
+.song-row::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(92,10,30,.28),rgba(139,0,0,.08),transparent);
+  transform:translateX(-100%);transition:transform .48s;
+}
+.song-row:hover{background:rgba(255,255,255,.058);border-color:var(--border);}
+.song-row:hover::before{transform:translateX(0);}
+.song-num{font-size:.6rem;color:var(--muted);width:22px;flex-shrink:0;text-align:center;font-variant-numeric:tabular-nums;}
+.song-art{
+  width:46px;height:46px;flex-shrink:0;border-radius:var(--r);
+  background:linear-gradient(135deg,var(--wine),var(--crimson));
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);position:relative;overflow:hidden;
+}
+.song-art::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.08),transparent);
+}
+.song-info{flex:1;min-width:0;}
+.song-nm{font-size:.88rem;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.song-ar{font-size:.7rem;color:var(--muted);margin-top:2px;}
+.song-why{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:.82rem;color:var(--blush);max-width:180px;text-align:right;flex-shrink:0;
+}
+.song-link{
+  flex-shrink:0;color:var(--rose);font-size:.7rem;
+  padding:5px 13px;border:1px solid rgba(201,82,106,.32);
+  transition:all var(--ease);white-space:nowrap;border-radius:20px;
+  display:flex;align-items:center;gap:4px;
+}
+.song-link:hover{background:rgba(201,82,106,.15);border-color:var(--rose);box-shadow:0 0 12px rgba(201,82,106,.2);}
+
+/* ═══════════════════════════════════════════════════
+   FOTOS — POLAROID MASONRY ALBUM
+═══════════════════════════════════════════════════ */
+.pola-grid{columns:3;column-gap:14px;}
+@media(max-width:680px){.pola-grid{columns:2;}}
+@media(max-width:400px){.pola-grid{columns:1;}}
+.polaroid{
+  break-inside:avoid;margin-bottom:14px;
+  background:linear-gradient(160deg,#f8f2ec,#ede5db);
+  padding:9px 9px 32px;
+  box-shadow:0 6px 20px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.6);
+  cursor:pointer;transition:transform .38s ease,box-shadow .38s ease;
+  position:relative;
+}
+.polaroid:nth-child(odd){transform:rotate(-.65deg);}
+.polaroid:nth-child(3n){transform:rotate(.8deg);}
+.polaroid:hover{
+  transform:rotate(0) scale(1.025)!important;
+  box-shadow:0 14px 42px rgba(0,0,0,.65),0 6px 12px rgba(201,82,106,.2),inset 0 1px 0 rgba(255,255,255,.6);
+  z-index:3;
+}
+.polaroid img{
+  width:100%;display:block;aspect-ratio:1;object-fit:cover;opacity:.93;
+  transition:opacity .3s;display:block;
+}
+.polaroid:hover img{opacity:1;}
+.pola-cap{
+  text-align:center;font-size:.68rem;color:#4a3a3a;margin-top:8px;
+  padding:0 4px;font-family:'Cormorant Garamond',serif;font-style:italic;
+  line-height:1.3;min-height:16px;
+}
+.pola-del{
+  position:absolute;top:6px;right:6px;
+  background:rgba(139,0,0,.78);border:none;color:white;
+  width:22px;height:22px;border-radius:50%;font-size:.6rem;
+  display:none;align-items:center;justify-content:center;
+  transition:background .22s;
+}
+.polaroid:hover .pola-del{display:flex;}
+.pola-del:hover{background:rgba(139,0,0,1);}
+
+/* ═══════════════════════════════════════════════════
+   VIDEOS
+═══════════════════════════════════════════════════ */
+.vids-list{display:flex;flex-direction:column;gap:10px;}
+.vid-row{
+  display:flex;align-items:center;gap:16px;padding:16px 20px;
+  background:var(--glass);border:1px solid var(--border);
+  transition:all var(--ease);border-radius:var(--r);
+}
+.vid-row:hover{border-color:var(--border-hi);background:rgba(201,82,106,.04);box-shadow:var(--sh-card);}
+.vid-icon{
+  width:54px;height:54px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(92,10,30,.65),rgba(8,3,6,.9));
+  border:1px solid var(--border);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem;
+  box-shadow:0 2px 10px rgba(0,0,0,.4);
+}
+.vid-info{flex:1;}
+.vid-ttl{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.06rem;color:var(--cream);margin-bottom:3px;}
+.vid-meta{font-size:.64rem;color:var(--muted);}
+.vid-link{
+  flex-shrink:0;padding:8px 18px;
+  background:linear-gradient(135deg,var(--wine),var(--crimson));
+  color:var(--cream);font-size:.67rem;letter-spacing:.18em;text-transform:uppercase;
+  border:none;transition:all var(--ease);border-radius:20px;
+  box-shadow:0 2px 10px rgba(139,0,0,.3);
+}
+.vid-link:hover{filter:brightness(1.15);box-shadow:0 4px 16px rgba(139,0,0,.45);}
+
+/* ═══════════════════════════════════════════════════
+   RECUERDOS — PREMIUM TIMELINE
+═══════════════════════════════════════════════════ */
+.timeline{display:flex;flex-direction:column;position:relative;}
+.timeline::before{
+  content:'';position:absolute;left:19px;top:12px;bottom:12px;width:1px;
+  background:linear-gradient(to bottom,transparent,var(--border) 6%,var(--border) 94%,transparent);
+}
+.tl-item{display:flex;gap:22px;padding-bottom:30px;position:relative;}
+.tl-pip{flex-shrink:0;width:40px;display:flex;flex-direction:column;align-items:center;padding-top:10px;}
+.tl-dot{
+  width:13px;height:13px;border-radius:50%;position:relative;z-index:1;
+  background:radial-gradient(circle at 35% 35%,var(--blush),var(--rose));
+  border:2px solid var(--dark);
+  box-shadow:0 0 0 2px var(--rose),0 0 18px rgba(201,82,106,.45);
+  animation:dotPop .4s ease both;
+}
+.tl-card{
+  flex:1;background:linear-gradient(145deg,var(--glass-md),var(--glass));
+  border:1px solid var(--border);padding:18px 22px;
+  transition:border-color var(--ease),box-shadow var(--ease),transform var(--ease);
+  animation:slideIn .45s ease both;border-radius:var(--r);
+  box-shadow:var(--sh-card);
+}
+.tl-card:hover{
+  border-color:var(--border-hi);
+  box-shadow:0 6px 24px rgba(0,0,0,.38),var(--sh-glow);
+  transform:translateX(3px);
+}
+.tl-date{font-size:.57rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rose);margin-bottom:6px;}
+.tl-ttl{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.08rem;color:var(--cream);margin-bottom:5px;}
+.tl-desc{font-size:.74rem;color:var(--muted);line-height:1.55;}
+.tl-img{
+  width:100%;margin-top:12px;max-height:200px;object-fit:cover;
+  opacity:.82;cursor:pointer;transition:opacity .3s;border-radius:var(--r);
+}
+.tl-img:hover{opacity:1;}
+.tl-author{font-size:.6rem;color:var(--muted);margin-top:9px;opacity:.6;}
+.tl-acts{display:flex;gap:4px;margin-top:8px;}
+
+/* ═══════════════════════════════════════════════════
+   CALENDARIO EMOCIONAL
+═══════════════════════════════════════════════════ */
+.cal-wrap{max-width:620px;margin:0 auto;}
+.cal-card{
+  background:var(--glass);border:1px solid var(--border);padding:28px;
+  box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.04);
+  border-radius:var(--r);
+}
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;}
+.cal-nav{
+  background:none;border:1px solid var(--border);color:var(--rose);
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  font-size:.9rem;transition:all var(--ease);border-radius:50%;
+}
+.cal-nav:hover{background:rgba(201,82,106,.14);border-color:var(--rose);box-shadow:0 0 12px rgba(201,82,106,.2);}
+.cal-my{
+  font-family:'Cormorant Garamond',serif;font-size:1.45rem;
+  font-style:italic;color:var(--cream);
+}
+.cal-names{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px;}
+.cal-dn{text-align:center;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:6px 0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-cell{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:.78rem;color:var(--cream);border-radius:50%;
+  transition:all .22s;opacity:.44;border:1px solid transparent;
+  position:relative;cursor:pointer;gap:2px;
+}
+.cal-cell:hover{background:rgba(201,82,106,.16);border-color:rgba(201,82,106,.38);opacity:1;transform:scale(1.08);}
+.cal-cell.has{opacity:1;color:var(--blush);}
+.cal-cell.sel{background:radial-gradient(circle,rgba(92,10,30,.9),rgba(139,0,0,.6));border-color:var(--rose);opacity:1;color:var(--cream);box-shadow:0 0 16px rgba(201,82,106,.35);}
+.cal-cell.today{border-color:rgba(201,82,106,.55);opacity:1;}
+.cal-cell.empty{opacity:0;pointer-events:none;}
+.cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:28px;}
+.cal-dot{width:4px;height:4px;border-radius:50%;}
+
+/* FILTER BAR */
+.fbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 0 6px;}
+.fbar-lbl{font-size:.61rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);}
+.fbar-chip{
+  padding:4px 14px;background:rgba(201,82,106,.1);
+  border:1px solid var(--rose);color:var(--rose);font-size:.69rem;border-radius:var(--r);
+}
+.fbar-clear{background:none;border:none;color:var(--muted);font-size:.67rem;text-decoration:underline;transition:color var(--ease);}
+.fbar-clear:hover{color:var(--rose);}
+
+/* ═══════════════════════════════════════════════════
+   NOTIFICACIONES
+═══════════════════════════════════════════════════ */
+.notif-panel{
+  position:fixed;top:62px;right:0;bottom:0;width:320px;
+  background:rgba(12,5,10,.97);border-left:1px solid var(--border);
+  z-index:190;transform:translateX(100%);
+  transition:transform .4s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;backdrop-filter:blur(24px);
+}
+.notif-panel.open{transform:translateX(0);}
+.notif-hdr{
+  padding:20px 20px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;background:rgba(12,5,10,.96);
+  backdrop-filter:blur(12px);
+}
+.notif-ttl{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.18rem;color:var(--blush);}
+.notif-all{background:none;border:none;color:var(--rose);font-size:.61rem;letter-spacing:.1em;}
+.notif-item{
+  padding:16px 20px;border-bottom:1px solid rgba(201,82,106,.06);
+  transition:background var(--ease);animation:slideIn .32s ease;
+}
+.notif-item.unread{background:rgba(201,82,106,.065);}
+.notif-item.unread::before{
+  content:'';display:block;width:3px;height:100%;
+  position:absolute;left:0;
+  background:var(--rose);
+}
+.notif-item{position:relative;}
+.notif-item:hover{background:rgba(255,255,255,.025);}
+.notif-type{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);margin-bottom:5px;}
+.notif-pre{font-size:.82rem;color:var(--cream);line-height:1.46;}
+.notif-time{font-size:.59rem;color:var(--muted);margin-top:5px;}
+.notif-empty{padding:56px 20px;text-align:center;color:var(--muted);font-size:.8rem;}
+.notif-empty-ico{font-size:2.2rem;display:block;margin-bottom:12px;opacity:.32;}
+
+/* ═══════════════════════════════════════════════════
+   LIGHTBOX
+═══════════════════════════════════════════════════ */
+.lightbox{
+  position:fixed;inset:0;background:rgba(0,0,0,.97);
+  z-index:2000;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:14px;padding:20px;
+}
+.lightbox.open{display:flex;animation:fadeIn .3s ease;}
+.lightbox img{max-width:90vw;max-height:80vh;object-fit:contain;box-shadow:0 0 60px rgba(0,0,0,.8);}
+.lb-close{
+  position:absolute;top:18px;right:22px;font-size:1.6rem;
+  color:var(--muted);background:none;border:none;transition:all var(--ease);
+  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+}
+.lb-close:hover{color:var(--cream);background:rgba(255,255,255,.1);}
+.lb-cap{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:1rem;color:var(--blush);text-align:center;max-width:600px;
+}
+
+/* ═══════════════════════════════════════════════════
+   UPLOAD
+═══════════════════════════════════════════════════ */
+.upload-zone{
+  border:1px dashed var(--border);padding:28px;text-align:center;
+  transition:all var(--ease);margin-bottom:12px;position:relative;border-radius:var(--r);
+}
+.upload-zone:hover{border-color:var(--rose);background:rgba(201,82,106,.04);box-shadow:inset 0 0 20px rgba(201,82,106,.04);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%;}
+.up-icon{font-size:1.9rem;display:block;margin-bottom:7px;}
+.up-txt{font-size:.71rem;color:var(--muted);}
+.up-sub{font-size:.59rem;color:rgba(138,112,112,.5);margin-top:3px;}
+.up-prev{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.up-thumb{width:60px;height:60px;object-fit:cover;border:1px solid var(--border);border-radius:var(--r);}
+.up-bar{height:2px;background:linear-gradient(90deg,var(--rose),var(--blush));width:0%;transition:width .35s;margin-top:8px;border-radius:1px;}
+
+/* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
+.tc{position:fixed;bottom:22px;right:22px;z-index:3000;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  padding:12px 18px;background:rgba(20,10,16,.97);
+  border-left:3px solid var(--rose);font-size:.78rem;color:var(--cream);
+  animation:toastIn .32s ease;min-width:240px;max-width:320px;
+  box-shadow:0 6px 28px rgba(0,0,0,.7);backdrop-filter:blur(12px);
+  border-radius:0 var(--r) var(--r) 0;
+}
+.toast.ok{border-left-color:var(--green);}
+.toast.err{border-left-color:#f44336;}
+
+/* EMPTY STATE */
+.es{text-align:center;padding:56px 20px;}
+.es-heart{font-size:3rem;display:block;margin-bottom:14px;animation:hbGlow 2.2s ease infinite;}
+.es p{color:var(--muted);font-size:.8rem;letter-spacing:.05em;}
+
+/* HEART LOADER inline */
+.hld{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px;gap:16px;}
+.hld-h{font-size:2.2rem;animation:hbGlow 1.5s ease infinite;}
+.hld-t{font-size:.56rem;letter-spacing:.46em;text-transform:uppercase;color:var(--muted);opacity:.65;}
+
+/* SETUP OVERLAY */
+.sov{
+  position:fixed;inset:0;background:rgba(0,0,0,.93);
+  z-index:1500;display:flex;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(10px);
+}
+
+/* FOOTER */
+footer{padding:52px;text-align:center;border-top:1px solid rgba(201,82,106,.07);}
+.ft-line{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:1.08rem;color:var(--blush);margin-bottom:4px;
+  text-shadow:0 0 30px rgba(232,160,168,.15);
+}
+.ft-sub{font-size:.56rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════ */
+@media(max-width:768px){
+  .topnav{padding:0 16px;}
+  .nav-center{display:none;}
+  .nav-brand{font-size:1.1rem;}
+  .wrap{padding:0 16px;}
+  .col-inner{padding:16px;}
+  .notif-panel{width:100%;}
+  .song-why{display:none;}
+  .btn-row{flex-direction:column;}
+  .hero-stats{flex-wrap:wrap;}
+  .hstat{flex:1 1 80px;border-left:none;border-top:1px solid var(--border);}
+  .hstat:first-child{border-top:none;}
+  .modal{padding:26px 18px;}
+  .auth-card{padding:38px 22px;}
+  .pola-grid{columns:2;column-gap:10px;}
+  .page-sec{padding:60px 0;}
+}
+@media(max-width:480px){
+  .hero-h1{font-size:clamp(2.8rem,12vw,3.8rem);}
+  .hstat{padding:14px 18px;}
+  .pola-grid{columns:2;}
+}
+
+/* ═══════════════════════════════════════════════════
+   TEMAS VISUALES
+═══════════════════════════════════════════════════ */
+[data-theme="rose"]{
+  --wine:#7C1F35;--crimson:#A83250;--rose:#E07090;
+  --blush:#F0B0C0;--border:rgba(224,112,144,.18);
+  --border-hi:rgba(224,112,144,.4);
+  --sh-glow:0 0 60px rgba(224,112,144,.12);
+}
+[data-theme="gold"]{
+  --wine:#5C4A10;--crimson:#8B6914;--rose:#C9A96E;
+  --blush:#E8D0A0;--border:rgba(201,169,110,.18);
+  --border-hi:rgba(201,169,110,.4);
+  --sh-glow:0 0 60px rgba(201,169,110,.12);
+}
+[data-theme="midnight"]{
+  --wine:#0A1A3C;--crimson:#1A3A7C;--rose:#5080C9;
+  --blush:#90B0E8;--dark:#020810;--charcoal:#0A1228;
+  --border:rgba(80,128,201,.18);--border-hi:rgba(80,128,201,.4);
+  --sh-glow:0 0 60px rgba(80,128,201,.12);
+}
+[data-theme="pastel"]{
+  --wine:#8C3060;--crimson:#C05888;--rose:#E090B0;
+  --blush:#F0C0D8;--dark:#180C14;--charcoal:#2A1422;
+  --border:rgba(224,144,176,.18);--border-hi:rgba(224,144,176,.4);
+}
+
+/* ═══════════════════════════════════════════════════
+   CONTADOR DE DÍAS / HERO EXTRAS
+═══════════════════════════════════════════════════ */
+.days-counter{
+  display:inline-flex;align-items:baseline;gap:6px;
+  margin-top:20px;animation:fadeUp 1s ease 1.1s both;
+}
+.days-num{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(2.8rem,8vw,6rem);font-style:italic;
+  color:var(--rose);line-height:1;
+  text-shadow:0 0 40px rgba(201,82,106,.3);
+}
+.days-label{
+  font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--muted);display:flex;flex-direction:column;gap:3px;margin-left:4px;
+}
+.days-detail{
+  display:flex;gap:16px;margin-top:8px;
+  font-size:.62rem;letter-spacing:.1em;color:var(--muted);
+  animation:fadeUp 1s ease 1.2s both;
+}
+.days-detail span{color:var(--blush);}
+
+/* ═══════════════════════════════════════════════════
+   SORPRÉNDEME
+═══════════════════════════════════════════════════ */
+.surprise-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 24px;margin-top:20px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  color:var(--blush);font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;
+  transition:all var(--ease);border-radius:var(--r);cursor:pointer;
+  animation:fadeUp 1s ease 1.3s both;
+}
+.surprise-btn:hover{
+  background:rgba(201,82,106,.1);border-color:var(--border-hi);
+  box-shadow:0 0 20px rgba(201,82,106,.15);
+  transform:translateY(-1px);
+}
+.surprise-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.95);
+  z-index:2500;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:20px;padding:24px;backdrop-filter:blur(12px);
+}
+.surprise-overlay.open{display:flex;animation:fadeIn .4s ease;}
+.surprise-card{
+  background:linear-gradient(145deg,rgba(92,10,30,.4),rgba(10,5,8,.9));
+  border:1px solid var(--border-hi);padding:32px 36px;
+  max-width:560px;width:100%;text-align:center;
+  box-shadow:var(--sh),var(--sh-glow);animation:fadeUp .5s ease;
+  border-radius:var(--r);
+}
+.surprise-type{
+  font-size:.58rem;letter-spacing:.38em;text-transform:uppercase;
+  color:var(--rose);margin-bottom:14px;
+}
+.surprise-content-text{
+  font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-style:italic;
+  color:var(--cream);line-height:1.6;margin-bottom:12px;
+}
+.surprise-img{
+  max-width:100%;max-height:320px;object-fit:contain;
+  margin:0 auto;display:block;border-radius:var(--r);
+}
+.surprise-date{font-size:.65rem;color:var(--muted);margin-top:12px;}
+.surprise-close{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  padding:8px 22px;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;
+  transition:all var(--ease);border-radius:var(--r);cursor:pointer;
+}
+.surprise-close:hover{border-color:var(--rose);color:var(--rose);}
+.surprise-again{
+  background:linear-gradient(135deg,var(--wine),var(--crimson));
+  border:none;color:var(--cream);
+  padding:10px 24px;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;
+  transition:all var(--ease);border-radius:var(--r);cursor:pointer;margin-left:8px;
+}
+.surprise-again:hover{filter:brightness(1.15);}
+
+/* ═══════════════════════════════════════════════════
+   HOY HACE... (ON THIS DAY)
+═══════════════════════════════════════════════════ */
+.otd-section{
+  padding:48px 0;border-top:1px solid rgba(201,82,106,.07);
+}
+.otd-cards{display:flex;flex-direction:column;gap:12px;}
+.otd-card{
+  display:flex;align-items:center;gap:16px;
+  padding:16px 20px;
+  background:linear-gradient(135deg,rgba(92,10,30,.2),rgba(10,5,8,.6));
+  border:1px solid var(--border);cursor:pointer;
+  transition:all var(--ease);border-radius:var(--r);
+}
+.otd-card:hover{border-color:var(--border-hi);transform:translateX(4px);}
+.otd-icon{font-size:1.6rem;flex-shrink:0;width:48px;text-align:center;}
+.otd-info{flex:1;}
+.otd-ago{font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rose);margin-bottom:4px;}
+.otd-text{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.02rem;color:var(--cream);line-height:1.4;}
+.otd-type{font-size:.62rem;color:var(--muted);margin-top:3px;}
+
+/* ═══════════════════════════════════════════════════
+   FAVORITOS ⭐
+═══════════════════════════════════════════════════ */
+.fav-btn{
+  background:none;border:none;font-size:.95rem;cursor:pointer;
+  transition:transform .25s,filter .25s;padding:4px 6px;opacity:.5;
+}
+.fav-btn.active{opacity:1;filter:drop-shadow(0 0 6px rgba(255,200,0,.6));}
+.fav-btn:hover{transform:scale(1.3);}
+
+/* ═══════════════════════════════════════════════════
+   REACCIONES
+═══════════════════════════════════════════════════ */
+.reactions-bar{
+  display:flex;align-items:center;gap:4px;
+  padding:8px 20px 14px;flex-wrap:wrap;
+}
+.reaction-btn{
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  padding:4px 8px;font-size:.82rem;cursor:pointer;
+  transition:all var(--ease);border-radius:20px;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.reaction-btn:hover{background:rgba(201,82,106,.1);border-color:var(--border-hi);}
+.reaction-btn.mine{background:rgba(201,82,106,.15);border-color:var(--rose);}
+.reaction-count{font-size:.65rem;color:var(--muted);}
+
+/* ═══════════════════════════════════════════════════
+   CÁPSULA DEL TIEMPO
+═══════════════════════════════════════════════════ */
+.capsule-card{
+  position:relative;overflow:hidden;
+  padding:24px 28px;
+  background:linear-gradient(145deg,rgba(92,10,30,.25),rgba(10,5,8,.85));
+  border:1px solid var(--border);margin-bottom:12px;
+  transition:all var(--ease);border-radius:var(--r);
+}
+.capsule-card:hover{border-color:var(--border-hi);}
+.capsule-card.locked{
+  background:linear-gradient(145deg,rgba(30,20,10,.4),rgba(10,5,8,.9));
+}
+.capsule-lock{
+  font-size:2rem;display:block;margin-bottom:10px;
+  animation:hbGlow 3s ease infinite;
+}
+.capsule-open-date{
+  font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:8px;
+}
+.capsule-title{
+  font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;
+  color:var(--cream);margin-bottom:6px;
+}
+.capsule-msg{font-size:.82rem;color:var(--muted);line-height:1.5;}
+.capsule-countdown{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:.9rem;color:var(--gold);margin-top:8px;
+}
+
+/* ═══════════════════════════════════════════════════
+   LOGROS
+═══════════════════════════════════════════════════ */
+.achievements-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;
+}
+.achievement{
+  text-align:center;padding:20px 12px;
+  background:var(--glass);border:1px solid var(--border);
+  transition:all var(--ease);border-radius:var(--r);
+  position:relative;overflow:hidden;
+}
+.achievement.unlocked{
+  border-color:rgba(201,169,110,.4);background:rgba(201,169,110,.06);
+}
+.achievement.unlocked::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(201,169,110,.08),transparent);
+}
+.achievement-icon{font-size:2rem;display:block;margin-bottom:8px;filter:grayscale(1);opacity:.35;}
+.achievement.unlocked .achievement-icon{filter:none;opacity:1;animation:hbGlow 3s ease infinite;}
+.achievement-name{font-size:.65rem;color:var(--muted);letter-spacing:.05em;line-height:1.3;}
+.achievement.unlocked .achievement-name{color:var(--gold);}
+
+/* ═══════════════════════════════════════════════════
+   TEMAS SELECTOR
+═══════════════════════════════════════════════════ */
+.theme-picker{
+  position:fixed;bottom:24px;left:24px;z-index:300;
+}
+.theme-toggle{
+  width:42px;height:42px;background:var(--glass-md);
+  border:1px solid var(--border);color:var(--rose);
+  font-size:1.1rem;border-radius:50%;cursor:pointer;
+  backdrop-filter:blur(12px);transition:all var(--ease);
+  display:flex;align-items:center;justify-content:center;
+}
+.theme-toggle:hover{border-color:var(--border-hi);background:rgba(201,82,106,.1);}
+.theme-options{
+  position:absolute;bottom:52px;left:0;
+  background:rgba(20,10,16,.96);border:1px solid var(--border);
+  padding:12px;border-radius:var(--r);display:none;
+  backdrop-filter:blur(16px);box-shadow:var(--sh);min-width:160px;
+}
+.theme-options.open{display:block;animation:fadeUp .25s ease;}
+.theme-option{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;
+  cursor:pointer;transition:background var(--ease);border-radius:var(--r);
+  font-size:.72rem;color:var(--cream);
+}
+.theme-option:hover{background:rgba(255,255,255,.06);}
+.theme-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+
+/* ═══════════════════════════════════════════════════
+   CONFIG MODAL (aniversario, nombre pareja, tema)
+═══════════════════════════════════════════════════ */
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+@media(max-width:480px){.config-grid{grid-template-columns:1fr;}}
+
+/* ═══════════════════════════════════════════════════
+   EMBED MEDIA (YouTube/Spotify)
+═══════════════════════════════════════════════════ */
+.media-embed{
+  width:100%;margin-top:10px;border-radius:var(--r);overflow:hidden;
+  border:1px solid var(--border);
+}
+.media-embed iframe{width:100%;display:block;border:none;}
+
+/* ═══════════════════════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════════════════════ */
+.sr{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease;}
+.sr.vis{opacity:1;transform:translateY(0);}
+.sr-delay-1{transition-delay:.1s;}
+.sr-delay-2{transition-delay:.2s;}
+.sr-delay-3{transition-delay:.3s;}
+
+/* ═══════════════════════════════════════════════════
+   VISTA DÍA — DIARIO DEL DÍA
+═══════════════════════════════════════════════════ */
+.day-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.96);
+  z-index:3000;display:none;flex-direction:column;
+  backdrop-filter:blur(12px);
+  animation:fadeIn .3s ease;
+  overflow:hidden;
+}
+.day-overlay.open{display:flex;}
+.day-header{
+  flex-shrink:0;
+  padding:20px 28px 16px;
+  background:linear-gradient(to bottom,rgba(92,10,30,.35),transparent);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:2;
+  backdrop-filter:blur(20px);
+}
+.day-back{
+  background:none;border:1px solid var(--border);color:var(--rose);
+  width:34px;height:34px;border-radius:50%;font-size:1rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--ease);flex-shrink:0;
+}
+.day-back:hover{background:rgba(201,82,106,.14);border-color:var(--rose);}
+.day-header-info{flex:1;}
+.day-header-date{
+  font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-style:italic;
+  color:var(--blush);line-height:1;
+}
+.day-header-sub{font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-top:3px;}
+.day-header-counts{
+  display:flex;gap:8px;flex-wrap:wrap;
+}
+.day-count-pill{
+  font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 9px;border:1px solid var(--border);color:var(--muted);
+  border-radius:20px;white-space:nowrap;
+}
+.day-count-pill.has{border-color:var(--rose);color:var(--rose);background:rgba(201,82,106,.08);}
+.day-tabs{
+  flex-shrink:0;
+  display:flex;gap:0;padding:0 28px;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;scrollbar-width:none;
+}
+.day-tabs::-webkit-scrollbar{display:none;}
+.day-tab{
+  padding:12px 16px;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer;transition:color var(--ease);
+  border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;
+  flex-shrink:0;
+}
+.day-tab.active{color:var(--rose);border-bottom-color:var(--rose);}
+.day-tab:hover{color:var(--cream);}
+.day-body{
+  flex:1;overflow-y:auto;padding:24px 28px 40px;
+}
+.day-section{display:none;animation:fadeUp .35s ease;}
+.day-section.active{display:block;}
+
+/* TIMELINE within day view */
+.day-timeline{display:flex;flex-direction:column;gap:16px;}
+.day-tl-item{
+  display:flex;gap:14px;align-items:flex-start;
+  animation:slideIn .35s ease both;
+}
+.day-tl-time{
+  flex-shrink:0;font-size:.62rem;color:var(--muted);
+  font-variant-numeric:tabular-nums;padding-top:3px;
+  width:38px;text-align:right;letter-spacing:.04em;
+}
+.day-tl-icon{
+  flex-shrink:0;width:28px;height:28px;border-radius:50%;
+  background:rgba(201,82,106,.12);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:.8rem;
+}
+.day-tl-content{flex:1;}
+
+/* Day messages */
+.day-msg-card{
+  background:linear-gradient(145deg,rgba(92,10,30,.2),rgba(10,5,8,.7));
+  border:1px solid var(--border);padding:16px 20px;
+  border-radius:var(--r);margin-bottom:10px;
+  transition:border-color var(--ease);
+}
+.day-msg-card:hover{border-color:var(--border-hi);}
+.day-msg-text{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:clamp(1rem,2.5vw,1.3rem);color:var(--cream);line-height:1.65;
+}
+.day-msg-sign{font-size:.7rem;color:var(--muted);margin-top:8px;text-align:right;}
+
+/* HISTORICAL memories in day view */
+.day-history{
+  padding:14px 18px;background:rgba(201,169,110,.06);
+  border:1px solid rgba(201,169,110,.2);border-radius:var(--r);
+  margin-bottom:14px;display:flex;gap:12px;align-items:flex-start;
+}
+.day-history-icon{font-size:1.3rem;flex-shrink:0;}
+.day-history-ago{font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
+.day-history-text{font-size:.82rem;color:var(--cream);line-height:1.4;}
+
+/* EMPTY day */
+.day-empty{
+  text-align:center;padding:60px 20px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+}
+.day-empty-heart{font-size:3rem;animation:hbGlow 2.5s ease infinite;}
+.day-empty-text{color:var(--muted);font-size:.85rem;}
+.day-empty-hint{
+  font-size:.7rem;color:var(--rose);border:1px solid var(--border);
+  padding:8px 20px;border-radius:var(--r);cursor:pointer;
+  transition:all var(--ease);
+}
+.day-empty-hint:hover{background:rgba(201,82,106,.08);border-color:var(--border-hi);}
+
+/* Day photos grid */
+.day-photos{
+  columns:3;column-gap:8px;
+}
+@media(max-width:600px){.day-photos{columns:2;}}
+.day-photo{
+  break-inside:avoid;margin-bottom:8px;cursor:pointer;
+  transition:transform .3s ease;
+}
+.day-photo:hover{transform:scale(1.02);}
+.day-photo img{width:100%;display:block;border-radius:var(--r);}
+.day-photo-cap{
+  font-size:.65rem;color:var(--muted);padding:4px 2px;
+  font-style:italic;
+}
+
+/* ═══════════════════════════════════════════════════
+   PUSH NOTIFICATIONS UI
+═══════════════════════════════════════════════════ */
+.push-prompt{
+  position:fixed;bottom:80px;right:24px;z-index:500;
+  background:rgba(20,10,16,.97);border:1px solid var(--border);
+  padding:16px 20px;max-width:300px;
+  box-shadow:var(--sh),var(--sh-glow);backdrop-filter:blur(16px);
+  animation:fadeUp .4s ease;border-radius:var(--r);
+  display:none;
+}
+.push-prompt.show{display:block;}
+.push-prompt-title{
+  font-family:'Cormorant Garamond',serif;font-style:italic;
+  font-size:1.05rem;color:var(--blush);margin-bottom:6px;
+}
+.push-prompt-text{font-size:.72rem;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+.push-prompt-btns{display:flex;gap:8px;}
+.push-allow{
+  flex:1;padding:9px;background:linear-gradient(135deg,var(--wine),var(--crimson));
+  border:none;color:var(--cream);font-size:.65rem;letter-spacing:.18em;
+  text-transform:uppercase;transition:all var(--ease);border-radius:var(--r);
+}
+.push-allow:hover{filter:brightness(1.15);}
+.push-deny{
+  padding:9px 14px;background:none;border:1px solid var(--border);
+  color:var(--muted);font-size:.65rem;letter-spacing:.1em;
+  text-transform:uppercase;transition:all var(--ease);border-radius:var(--r);
+}
+.push-deny:hover{border-color:var(--muted);color:var(--cream);}
+
+/* NOTIF CONFIG PANEL  */
+.notif-config{
+  padding:16px 20px;border-top:1px solid var(--border);
+}
+.notif-config-title{
+  font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--rose);margin-bottom:12px;
+}
+.notif-toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;border-bottom:1px solid rgba(201,82,106,.05);
+}
+.notif-toggle-lbl{font-size:.76rem;color:var(--cream);}
+.ntoggle{
+  position:relative;width:36px;height:20px;cursor:pointer;
+}
+.ntoggle input{opacity:0;width:0;height:0;position:absolute;}
+.ntoggle-track{
+  position:absolute;inset:0;background:rgba(255,255,255,.1);
+  border-radius:10px;transition:background .3s;border:1px solid var(--border);
+}
+.ntoggle input:checked + .ntoggle-track{background:var(--wine);}
+.ntoggle-thumb{
+  position:absolute;top:3px;left:3px;width:14px;height:14px;
+  background:var(--muted);border-radius:50%;transition:all .3s;
+}
+.ntoggle input:checked ~ .ntoggle-thumb{background:var(--rose);transform:translateX(16px);}
+
+/* IN-APP FLOAT NOTIF (when partner uploads) */
+.float-notif{
+  position:fixed;top:72px;right:16px;z-index:1500;
+  background:rgba(20,10,16,.97);border:1px solid var(--border-hi);
+  padding:14px 16px;max-width:280px;
+  box-shadow:var(--sh),var(--sh-glow);backdrop-filter:blur(16px);
+  border-radius:var(--r);border-left:3px solid var(--rose);
+  animation:toastIn .4s ease;
+}
+.float-notif-title{font-size:.72rem;color:var(--rose);margin-bottom:4px;letter-spacing:.05em;}
+.float-notif-body{font-size:.78rem;color:var(--cream);line-height:1.4;}
+.float-notif-time{font-size:.58rem;color:var(--muted);margin-top:6px;}
+</style>
+</head>
+<body>
+
+<!-- ══ LOADER ROMÁNTICO ══ -->
+<div id="loader">
+  <div class="ld-heart">♥</div>
+  <div class="ld-text">Buscando recuerdos...</div>
+</div>
+
+<!-- ══ AUTH ══ -->
+<div id="authScreen">
+  <div class="auth-card">
+    <p class="auth-logo">para ti</p>
+    <p class="auth-sub">✦ nuestro universo privado ✦</p>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Entrar</div>
+      <div class="auth-tab" onclick="switchTab('register')">Registrarse</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <div class="field"><label>Correo</label><input type="email" id="lEmail" placeholder="tu@correo.com" autocomplete="email"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-p" id="loginBtn" onclick="handleLogin()">Entrar ♥</button>
+      <div class="auth-err" id="lErr"></div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" style="display:none">
+      <div id="rStep1">
+        <p style="font-size:.63rem;color:var(--muted);margin-bottom:14px;letter-spacing:.05em">Paso 1 de 2 — Tu cuenta</p>
+        <div class="field"><label>Tu nombre</label><input type="text" id="rName" placeholder="¿Cómo te llamas?"></div>
+        <div class="field"><label>Correo</label><input type="email" id="rEmail" placeholder="tu@correo.com"></div>
+        <div class="field"><label>Contraseña</label><input type="password" id="rPass" placeholder="Mínimo 6 caracteres"></div>
+        <button class="btn-p" onclick="goStep2()">Siguiente →</button>
+        <div class="auth-err" id="rErr1"></div>
+      </div>
+      <div id="rStep2" style="display:none">
+        <p style="font-size:.63rem;color:var(--muted);margin-bottom:14px;letter-spacing:.05em">Paso 2 de 2 — Tu espacio privado</p>
+        <div class="co-grid">
+          <div class="co-opt active" id="optCreate" onclick="selCoupleOpt('create')">
+            <span class="co-icon">💑</span>
+            <span class="co-lbl">Crear espacio</span>
+            <span class="co-sub">Soy el primero</span>
+          </div>
+          <div class="co-opt" id="optJoin" onclick="selCoupleOpt('join')">
+            <span class="co-icon">🔗</span>
+            <span class="co-lbl">Unirme</span>
+            <span class="co-sub">Tengo un código</span>
+          </div>
+        </div>
+        <div id="joinField" style="display:none">
+          <div class="field">
+            <label>Código de invitación</label>
+            <input type="text" id="invCode" placeholder="ABC123" maxlength="6"
+              style="text-transform:uppercase;letter-spacing:.3em;font-size:1.1rem;text-align:center">
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:4px">
+          <button class="btn-s" onclick="backStep1()">← Volver</button>
+          <button class="btn-p" style="flex:2;margin-top:0" id="rFinalBtn" onclick="handleRegister()">Crear cuenta ♥</button>
+        </div>
+        <div class="auth-err" id="rErr2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+
+  <nav class="topnav">
+    <span class="nav-brand">para ti ♥</span>
+    <div class="nav-center" id="navCenter"></div>
+    <div class="nav-right">
+      <button class="nav-btn" onclick="showInvite()" title="Invitar pareja">🔗</button>
+      <button class="nav-btn" onclick="toggleNotifs()" title="Notificaciones">
+        🔔<span class="notif-badge" id="notifBadge"></span>
+      </button>
+      <span class="nav-name" id="navName"></span>
+      <button class="nav-btn" onclick="openMod('config')" title="Configuración">⚙️</button>
+      <button class="btn-out" onclick="handleLogout()">Salir</button>
+    </div>
+  </nav>
+
+  <!-- NOTIF PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-hdr">
+      <span class="notif-ttl">Notificaciones</span>
+      <button class="notif-all" onclick="markAllRead()">Marcar leídas</button>
+    </div>
+    <div id="notifList"><div class="notif-empty"><span class="notif-empty-ico">🔔</span>Sin notificaciones</div></div>
+    <div class="notif-config">
+      <div class="notif-config-title">Configuración</div>
+      <div class="notif-toggle-row">
+        <span class="notif-toggle-lbl">Notificaciones en app</span>
+        <label class="ntoggle"><input type="checkbox" id="ntInApp" checked onchange="saveNotifPrefs()"><div class="ntoggle-track"></div><div class="ntoggle-thumb"></div></label>
+      </div>
+      <div class="notif-toggle-row">
+        <span class="notif-toggle-lbl">Push del navegador</span>
+        <label class="ntoggle"><input type="checkbox" id="ntPush" onchange="togglePushPref()"><div class="ntoggle-track"></div><div class="ntoggle-thumb"></div></label>
+      </div>
+      <div class="notif-toggle-row">
+        <span class="notif-toggle-lbl">Sonido</span>
+        <label class="ntoggle"><input type="checkbox" id="ntSound" onchange="saveNotifPrefs()"><div class="ntoggle-track"></div><div class="ntoggle-thumb"></div></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVITE MODAL -->
+  <div class="moverlay" id="mInvite">
+    <div class="modal" style="max-width:360px;text-align:center">
+      <button class="m-close" onclick="closeMod('mInvite')">✕</button>
+      <p class="m-ttl">Código de invitación</p>
+      <p style="font-size:.73rem;color:var(--muted);margin-bottom:22px;line-height:1.65">
+        Comparte este código con tu pareja para que se una a tu espacio privado.
+      </p>
+      <div class="inv-code" id="invCodeDisp"></div>
+      <button class="btn-p" onclick="copyInvite()">Copiar código 📋</button>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div id="petals"></div>
+    <div class="hero-content">
+      <p class="hero-eye">✦ un universo solo nuestro ✦</p>
+      <h1 class="hero-h1">Hecho con<em>amor</em></h1>
+      <div class="hero-date-wrap">
+        <p class="hero-date-lbl">Hoy es</p>
+        <p class="hero-date-val" id="heroDate"></p>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><span class="hstat-n" id="stMsg">—</span><span class="hstat-l">Mensajes</span></div>
+        <div class="hstat"><span class="hstat-n" id="stPho">—</span><span class="hstat-l">Fotos</span></div>
+        <div class="hstat"><span class="hstat-n" id="stSng">—</span><span class="hstat-l">Canciones</span></div>
+        <div class="hstat"><span class="hstat-n" id="stMem">—</span><span class="hstat-l">Recuerdos</span></div>
+      </div>
+      <div class="pstatus" id="pStatus">
+        <span class="pstatus-dot"></span>
+        <span id="pStatusTxt">Cargando...</span>
+      </div>
+    </div>
+    <div id="daysCounter" style="display:none">
+        <div class="days-counter"><span class="days-num" id="daysNum">0</span><span class="days-label">días<br>juntos ♥</span></div>
+        <div class="days-detail" id="daysDetail"></div>
+      </div>
+      <button class="surprise-btn" onclick="openSurprise()">🎲 Sorpréndeme</button>
+    <div class="scroll-hint"><span>Explorar</span><div class="scroll-line"></div></div>
+  </section>
+
+  <!-- CALENDARIO -->
+  <section class="page-sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-eye">navega en el tiempo</span>
+        <h2 class="sec-ttl">Calendario <em>emocional</em></h2>
+      </div>
+      <div class="cal-wrap">
+        <div class="cal-card">
+          <div class="cal-hdr">
+            <button class="cal-nav" id="calPrev">&#8592;</button>
+            <span class="cal-my" id="calMY"></span>
+            <button class="cal-nav" id="calNext">&#8594;</button>
+          </div>
+          <div class="cal-names" id="calNames"></div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div id="fbar" style="display:none" class="fbar">
+          <span class="fbar-lbl">Filtrando:</span>
+          <span class="fbar-chip" id="fbarDate"></span>
+          <button class="fbar-clear" onclick="clearFilter()">✕ Ver todo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MENSAJES -->
+  <section class="page-sec">
+    <div class="wrap">
+      <button class="tog-btn" onclick="togSec('msgs')">
+        <span>💌 &nbsp;Mensajes del día</span><span class="tog-icon">▼</span>
+      </button>
+      <div class="collapse" id="sec-msgs">
+        <div class="col-inner">
+          <button class="add-btn" onclick="openMod('msg')">+ Nuevo mensaje</button>
+          <div id="msgsList"><div class="hld"><div class="hld-h">♥</div><div class="hld-t">Buscando recuerdos...</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CANCIONES -->
+  <section class="page-sec">
+    <div class="wrap">
+      <button class="tog-btn" onclick="togSec('songs')">
+        <span>🎵 &nbsp;Nuestra música</span><span class="tog-icon">▼</span>
+      </button>
+      <div class="collapse" id="sec-songs">
+        <div class="col-inner">
+          <button class="add-btn" onclick="openMod('song')">+ Agregar canción</button>
+          <div id="songsList"><div class="hld"><div class="hld-h">♥</div><div class="hld-t">Buscando recuerdos...</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOTOS -->
+  <section class="page-sec">
+    <div class="wrap">
+      <button class="tog-btn" onclick="togSec('photos')">
+        <span>📷 &nbsp;Galería de fotos</span><span class="tog-icon">▼</span>
+      </button>
+      <div class="collapse" id="sec-photos">
+        <div class="col-inner">
+          <button class="add-btn" onclick="openMod('photo')">+ Subir fotos</button>
+          <div id="photosList"><div class="hld"><div class="hld-h">♥</div><div class="hld-t">Buscando recuerdos...</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEOS -->
+  <section class="page-sec">
+    <div class="wrap">
+      <button class="tog-btn" onclick="togSec('videos')">
+        <span>🎬 &nbsp;Reels y videos</span><span class="tog-icon">▼</span>
+      </button>
+      <div class="collapse" id="sec-videos">
+        <div class="col-inner">
+          <button class="add-btn" onclick="openMod('video')">+ Agregar video</button>
+          <div id="videosList"><div class="hld"><div class="hld-h">♥</div><div class="hld-t">Buscando recuerdos...</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECUERDOS -->
+  <section class="page-sec">
+    <div class="wrap">
+      <button class="tog-btn" onclick="togSec('memories')">
+        <span>🌹 &nbsp;Recuerdos especiales</span><span class="tog-icon">▼</span>
+      </button>
+      <div class="collapse" id="sec-memories">
+        <div class="col-inner">
+          <button class="add-btn" onclick="openMod('memory')">+ Agregar recuerdo</button>
+          <div id="memoriesList"><div class="hld"><div class="hld-h">♥</div><div class="hld-t">Buscando recuerdos...</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══ HOY HACE... ══ -->
+  <section class="otd-section" id="otdSection" style="display:none">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-eye">en este día</span>
+        <h2 class="sec-ttl">Hoy hace... <em>✨</em></h2>
+      </div>
+      <div id="otdList" class="otd-cards"></div>
+    </div>
+  </section>
+
+  <!-- ══ CÁPSULA DEL TIEMPO ══ -->
+  <section class="page-sec">
+    <div class="wrap">
+      <button class="tog-btn" onclick="togSec('capsules')">
+        <span>💌 &nbsp;Cápsula del tiempo</span><span class="tog-icon">▼</span>
+      </button>
+      <div class="collapse" id="sec-capsules">
+        <div class="col-inner">
+          <button class="add-btn" onclick="openMod('capsule')">+ Carta para el futuro</button>
+          <div id="capsulesList"><div class="hld"><div class="hld-h">♥</div><div class="hld-t">Buscando recuerdos...</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ FAVORITOS ══ -->
+  <section class="page-sec">
+    <div class="wrap">
+      <button class="tog-btn" onclick="togSec('favs')">
+        <span>⭐ &nbsp;Nuestros favoritos</span><span class="tog-icon">▼</span>
+      </button>
+      <div class="collapse" id="sec-favs">
+        <div class="col-inner">
+          <div id="favsList"><div class="hld"><div class="hld-h">♥</div><div class="hld-t">Buscando recuerdos...</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ LOGROS ══ -->
+  <section class="page-sec">
+    <div class="wrap">
+      <button class="tog-btn" onclick="togSec('achievements')">
+        <span>🏆 &nbsp;Logros de pareja</span><span class="tog-icon">▼</span>
+      </button>
+      <div class="collapse" id="sec-achievements">
+        <div class="col-inner">
+          <div id="achievementsList"><div class="hld"><div class="hld-h">♥</div><div class="hld-t">Calculando logros...</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="ft-line">Cada momento contigo es eterno</p>
+    <p class="ft-sub">— Hecho con amor, solo para ti ✦</p>
+  </footer>
+</div>
+
+<!-- THEME PICKER -->
+<div class="theme-picker">
+  <button class="theme-toggle" onclick="toggleThemePicker()" title="Cambiar tema">🎨</button>
+  <div class="theme-options" id="themeOpts">
+    <div class="theme-option" onclick="applyTheme('wine')"><div class="theme-dot" style="background:#5C0A1E"></div>Rojo vino</div>
+    <div class="theme-option" onclick="applyTheme('rose')"><div class="theme-dot" style="background:#E07090"></div>Rosa elegante</div>
+    <div class="theme-option" onclick="applyTheme('gold')"><div class="theme-dot" style="background:#C9A96E"></div>Dorado premium</div>
+    <div class="theme-option" onclick="applyTheme('midnight')"><div class="theme-dot" style="background:#5080C9"></div>Medianoche</div>
+    <div class="theme-option" onclick="applyTheme('pastel')"><div class="theme-dot" style="background:#E090B0"></div>Pastel suave</div>
+  </div>
+</div>
+
+<!-- SORPRÉNDEME OVERLAY -->
+<div class="surprise-overlay" id="surpriseOverlay">
+  <div class="surprise-card" id="surpriseCard">
+    <div class="surprise-type" id="surpriseType"></div>
+    <div id="surpriseContent"></div>
+    <div class="surprise-date" id="surpriseDate"></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:8px">
+    <button class="surprise-again" onclick="loadSurprise()">🎲 Otra vez</button>
+    <button class="surprise-close" onclick="closeSurprise()">Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL CÁPSULA -->
+<div class="moverlay" id="mCapsule">
+  <div class="modal">
+    <button class="m-close" onclick="closeMod('mCapsule')">✕</button>
+    <p class="m-ttl">Carta para el futuro 💌</p>
+    <div class="field"><label>Título</label><input type="text" id="capTitle" placeholder="Una carta para nosotros..."></div>
+    <div class="field"><label>Tu mensaje</label><textarea id="capMsg" rows="6" style="resize:vertical" placeholder="Querido yo del futuro... estoy tan feliz contigo..."></textarea></div>
+    <div class="field"><label>Abrir el día</label><input type="date" id="capDate" min=""></div>
+    <p style="font-size:.68rem;color:var(--muted);margin-top:-8px;margin-bottom:12px;line-height:1.5">
+      🔒 El contenido permanece oculto hasta la fecha indicada
+    </p>
+    <div class="btn-row"><button class="btn-s" onclick="closeMod('mCapsule')">Cancelar</button><button class="btn-p" style="margin-top:0" onclick="saveCapsule()">Sellar ♥</button></div>
+  </div>
+</div>
+
+<!-- MODAL CONFIGURACIÓN -->
+<div class="moverlay" id="mConfig">
+  <div class="modal">
+    <button class="m-close" onclick="closeMod('mConfig')">✕</button>
+    <p class="m-ttl">Configurar nuestro espacio ⚙️</p>
+    <div class="field"><label>Nombre de la pareja</label><input type="text" id="cfgName" placeholder="Ej: Ana & Juan"></div>
+    <div class="field"><label>Fecha de aniversario</label><input type="date" id="cfgAnniv"></div>
+    <div class="field">
+      <label>Tema visual</label>
+      <select id="cfgTheme">
+        <option value="wine">🌹 Rojo vino (por defecto)</option>
+        <option value="rose">🌸 Rosa elegante</option>
+        <option value="gold">✨ Dorado premium</option>
+        <option value="midnight">🌙 Medianoche azul</option>
+        <option value="pastel">☁️ Suave pastel</option>
+      </select>
+    </div>
+    <div class="btn-row"><button class="btn-s" onclick="closeMod('mConfig')">Cancelar</button><button class="btn-p" style="margin-top:0" onclick="saveConfig()">Guardar ♥</button></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" onclick="closeLB()">✕</button>
+  <img id="lbImg" src="" alt="">
+  <p class="lb-cap" id="lbCap"></p>
+</div>
+
+<div class="tc" id="tc"></div>
+
+<!-- ══ VISTA DÍA — DIARIO DEL DÍA ══ -->
+<div class="day-overlay" id="dayOverlay">
+  <div class="day-header">
+    <button class="day-back" onclick="closeDayView()">&#8592;</button>
+    <div class="day-header-info">
+      <div class="day-header-date" id="dayHeaderDate"></div>
+      <div class="day-header-sub" id="dayHeaderSub">Reviviendo este día ✨</div>
+    </div>
+    <div class="day-header-counts" id="dayHeaderCounts"></div>
+  </div>
+  <div class="day-tabs" id="dayTabs">
+    <div class="day-tab active" onclick="switchDayTab('all')">✨ Todo</div>
+    <div class="day-tab" onclick="switchDayTab('messages')">💌 Mensajes</div>
+    <div class="day-tab" onclick="switchDayTab('photos')">📷 Fotos</div>
+    <div class="day-tab" onclick="switchDayTab('songs')">🎵 Música</div>
+    <div class="day-tab" onclick="switchDayTab('videos')">🎬 Videos</div>
+    <div class="day-tab" onclick="switchDayTab('memories')">🌹 Recuerdos</div>
+  </div>
+  <div class="day-body" id="dayBody">
+    <div class="day-section active" id="day-all"><div class="hld"><div class="hld-h">♥</div><div class="hld-t">Viajando en el tiempo...</div></div></div>
+    <div class="day-section" id="day-messages"></div>
+    <div class="day-section" id="day-photos"></div>
+    <div class="day-section" id="day-songs"></div>
+    <div class="day-section" id="day-videos"></div>
+    <div class="day-section" id="day-memories"></div>
+  </div>
+</div>
+
+<!-- ══ PUSH PROMPT ══ -->
+<div class="push-prompt" id="pushPrompt">
+  <p class="push-prompt-title">🔔 Recibe avisos de tu pareja</p>
+  <p class="push-prompt-text">Activa las notificaciones para saber cuando tu pareja agregue algo especial, incluso con la app cerrada.</p>
+  <div class="push-prompt-btns">
+    <button class="push-allow" onclick="enablePush()">Activar ♥</button>
+    <button class="push-deny" onclick="dismissPushPrompt()">Ahora no</button>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<div class="moverlay" id="mMsg">
+  <div class="modal">
+    <button class="m-close" onclick="closeMod('mMsg')">✕</button>
+    <p class="m-ttl" id="mMsgTtl">Nuevo mensaje</p>
+    <input type="hidden" id="editMsgId">
+    <div class="field"><label>Fecha</label><input type="date" id="msgDate"></div>
+    <div class="field"><label>Mensaje</label><textarea id="msgText" rows="5" style="resize:vertical" placeholder="Escríbele algo hermoso..."></textarea></div>
+    <div class="field"><label>Firma (opcional)</label><input type="text" id="msgSign" placeholder="Con todo mi amor"></div>
+    <div class="btn-row"><button class="btn-s" onclick="closeMod('mMsg')">Cancelar</button><button class="btn-p" style="margin-top:0" onclick="saveMsg()">Guardar ♥</button></div>
+  </div>
+</div>
+
+<div class="moverlay" id="mSong">
+  <div class="modal">
+    <button class="m-close" onclick="closeMod('mSong')">✕</button>
+    <p class="m-ttl">Agregar canción</p>
+    <div class="field"><label>Fecha</label><input type="date" id="songDate"></div>
+    <div class="field"><label>Título</label><input type="text" id="songTitle" placeholder="Ej: Perfect"></div>
+    <div class="field"><label>Artista</label><input type="text" id="songArtist" placeholder="Ej: Ed Sheeran"></div>
+    <div class="field"><label>¿Por qué esta canción?</label><input type="text" id="songWhy" placeholder="Nuestra canción especial..."></div>
+    <div class="field"><label>Link Spotify (opcional)</label><input type="url" id="songUrl" placeholder="https://open.spotify.com/..."></div>
+    <div class="btn-row"><button class="btn-s" onclick="closeMod('mSong')">Cancelar</button><button class="btn-p" style="margin-top:0" onclick="saveSong()">Guardar ♥</button></div>
+  </div>
+</div>
+
+<div class="moverlay" id="mPhoto">
+  <div class="modal">
+    <button class="m-close" onclick="closeMod('mPhoto')">✕</button>
+    <p class="m-ttl">Subir fotos</p>
+    <div class="field"><label>Fecha del recuerdo</label><input type="date" id="photoDate"></div>
+    <div class="upload-zone">
+      <input type="file" id="photoFiles" accept="image/jpeg,image/png,image/webp,image/gif" multiple onchange="prevPhotos()">
+      <span class="up-icon">📷</span>
+      <p class="up-txt">Arrastra o haz clic para seleccionar</p>
+      <p class="up-sub">JPEG · PNG · WEBP &nbsp;|&nbsp; Máx 15 MB c/u</p>
+      <div class="up-prev" id="photoPrev"></div>
+      <div class="up-bar" id="photoBar"></div>
+    </div>
+    <div class="field"><label>Descripción (opcional)</label><input type="text" id="photoCaption" placeholder="Un momento mágico..."></div>
+    <div class="btn-row"><button class="btn-s" onclick="closeMod('mPhoto')">Cancelar</button><button class="btn-p" style="margin-top:0" onclick="savePhotos()">Subir fotos ♥</button></div>
+  </div>
+</div>
+
+<div class="moverlay" id="mVideo">
+  <div class="modal">
+    <button class="m-close" onclick="closeMod('mVideo')">✕</button>
+    <p class="m-ttl">Agregar video</p>
+    <div class="field"><label>Fecha</label><input type="date" id="videoDate"></div>
+    <div class="field"><label>Título</label><input type="text" id="videoTitle" placeholder="Bailando juntos..."></div>
+    <div class="field"><label>Link externo (YouTube, Instagram...)</label><input type="url" id="videoUrl" placeholder="https://..."></div>
+    <p style="font-size:.66rem;color:var(--muted);margin:6px 0 10px;text-align:center;letter-spacing:.04em">— o sube un archivo —</p>
+    <div class="upload-zone">
+      <input type="file" id="videoFile" accept="video/mp4,video/webm,video/quicktime">
+      <span class="up-icon">🎬</span>
+      <p class="up-txt">MP4 · WEBM &nbsp;|&nbsp; Máx 200 MB</p>
+      <div class="up-bar" id="videoBar"></div>
+    </div>
+    <div class="btn-row"><button class="btn-s" onclick="closeMod('mVideo')">Cancelar</button><button class="btn-p" style="margin-top:0" onclick="saveVideo()">Guardar ♥</button></div>
+  </div>
+</div>
+
+<div class="moverlay" id="mMemory">
+  <div class="modal">
+    <button class="m-close" onclick="closeMod('mMemory')">✕</button>
+    <p class="m-ttl">Agregar recuerdo</p>
+    <div class="field"><label>Fecha</label><input type="date" id="memDate"></div>
+    <div class="field"><label>Título</label><input type="text" id="memTitle" placeholder="El día que nos conocimos..."></div>
+    <div class="field"><label>Descripción</label><textarea id="memDesc" rows="3" style="resize:vertical" placeholder="Cuéntame ese momento especial..."></textarea></div>
+    <div class="upload-zone">
+      <input type="file" id="memFile" accept="image/jpeg,image/png,image/webp" onchange="prevMem()">
+      <span class="up-icon">🌹</span>
+      <p class="up-txt">Foto del recuerdo (opcional)</p>
+      <div class="up-prev" id="memPrev"></div>
+      <div class="up-bar" id="memBar"></div>
+    </div>
+    <div class="btn-row"><button class="btn-s" onclick="closeMod('mMemory')">Cancelar</button><button class="btn-p" style="margin-top:0" onclick="saveMemory()">Guardar ♥</button></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════ JAVASCRIPT ══════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════
+// ⚙️  CONFIGURACIÓN — EDITA ESTO
+// ═══════════════════════════════════════════════════
+const SB_URL = 'https://dcuvxdfsbfovnrojkqrm.supabase.co';
+const SB_KEY = 'sb_publishable_Uoa91Ni-alUdJLe-3P0MLA_tnnY1Mg5';
+// ═══════════════════════════════════════════════════
+
+const { createClient } = supabase;
+const sb = createClient(SB_URL, SB_KEY);
+
+// ── ESTADO ──────────────────────────────────────────
+let user      = null;
+let profile   = null;
+let coupleId  = null;
+let activeDate= null;
+let calDate   = new Date();
+let notifCh   = null;
+let booted    = false;
+let pendReg   = null;
+let cOpt      = 'create';
+let sOpt      = 'create';
+let datesMap  = {};
+
+const MONTHS  = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                 "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const CAL_CLR = {messages:'#C9526A',photos:'#8B1A2B',songs:'#C9A96E',videos:'#5C7A9A',memories:'#7A5C9A'};
+const IMGS    = ['image/jpeg','image/png','image/webp','image/gif'];
+const VIDS    = ['video/mp4','video/webm','video/quicktime'];
+
+const fmtDate = d => new Date(d+'T12:00:00')
+  .toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+const today   = () => new Date().toISOString().split('T')[0];
+
+// ── HELPERS ─────────────────────────────────────────
+function toast(msg, type='ok'){
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;t.textContent=msg;
+  document.getElementById('tc').appendChild(t);
+  setTimeout(()=>t.remove(),4200);
+}
+function hld(id){
+  document.getElementById(id).innerHTML=
+    '<div class="hld"><div class="hld-h">♥</div><div class="hld-t">Buscando recuerdos...</div></div>';
+}
+function emp(id,msg='Sin contenido aún'){
+  document.getElementById(id).innerHTML=
+    `<div class="es"><span class="es-heart">♥</span><p>${msg}</p></div>`;
+}
+function closeMod(id){document.getElementById(id)?.classList.remove('open');}
+document.addEventListener('click',e=>{
+  if(e.target.classList.contains('moverlay'))e.target.classList.remove('open');
+});
+function uid(){
+  return([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,c=>
+    (c^crypto.getRandomValues(new Uint8Array(1))[0]&15>>c/4).toString(16));
+}
+function chkFile(f,type='img'){
+  const ok=type==='img'?IMGS:VIDS,max=type==='img'?15:200;
+  if(!ok.includes(f.type)){toast('Tipo no permitido: '+f.type,'err');return false;}
+  if(f.size>max*1024*1024){toast(`Máx ${max}MB por archivo`,'err');return false;}
+  return true;
+}
+async function signedUrl(bucket,path){
+  const{data,error}=await sb.storage.from(bucket).createSignedUrl(path,3600);
+  return error?null:data.signedUrl;
+}
+
+// ── FECHAS MÁXIMAS ────────────────────────────────────────────
+function aplicarLimitesDeFecha(){
+  const hoy=today();
+  ['msgDate','songDate','photoDate','videoDate','memDate']
+    .forEach(id=>{const e=document.getElementById(id);if(e)e.max=hoy;});
+}
+
+// ── LOADER ──────────────────────────────────────────
+function hideLoader(){
+  const l=document.getElementById('loader');
+  if(l){l.classList.add('out');setTimeout(()=>l.remove(),750);}
+}
+
+// ── AUTH TABS ───────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>
+    t.classList.toggle('active',i===(tab==='login'?0:1)));
+  document.getElementById('loginForm').style.display   =tab==='login'?'block':'none';
+  document.getElementById('registerForm').style.display=tab==='register'?'block':'none';
+}
+
+// ── COUPLE OPT ──────────────────────────────────────
+function selCoupleOpt(opt){
+  cOpt=opt;
+  document.getElementById('optCreate').classList.toggle('active',opt==='create');
+  document.getElementById('optJoin').classList.toggle('active',opt==='join');
+  document.getElementById('joinField').style.display=opt==='join'?'block':'none';
+}
+
+// ── REG STEPS ───────────────────────────────────────
+function goStep2(){
+  const name=document.getElementById('rName').value.trim();
+  const email=document.getElementById('rEmail').value.trim();
+  const pass=document.getElementById('rPass').value;
+  const err=document.getElementById('rErr1');
+  if(!name||!email||!pass){err.textContent='Completa todos los campos';return;}
+  if(pass.length<6){err.textContent='Contraseña: mínimo 6 caracteres';return;}
+  err.textContent='';
+  document.getElementById('rStep1').style.display='none';
+  document.getElementById('rStep2').style.display='block';
+}
+function backStep1(){
+  document.getElementById('rStep2').style.display='none';
+  document.getElementById('rStep1').style.display='block';
+}
+
+// ── LOGIN ────────────────────────────────────────────
+async function handleLogin(){
+  const email=document.getElementById('lEmail').value.trim();
+  const pass=document.getElementById('lPass').value;
+  const btn=document.getElementById('loginBtn');
+  const err=document.getElementById('lErr');
+  if(!email||!pass){err.textContent='Completa todos los campos';return;}
+  btn.disabled=true;btn.textContent='Entrando...';err.textContent='';
+  const{error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){
+    err.textContent=error.message.includes('Invalid')?'Correo o contraseña incorrectos':error.message;
+    btn.disabled=false;btn.textContent='Entrar ♥';
+  }
+}
+
+// ── REGISTER ─────────────────────────────────────────
+async function handleRegister(){
+  const name=document.getElementById('rName').value.trim();
+  const email=document.getElementById('rEmail').value.trim();
+  const pass=document.getElementById('rPass').value;
+  const code=document.getElementById('invCode').value.trim().toUpperCase();
+  const btn=document.getElementById('rFinalBtn');
+  const err=document.getElementById('rErr2');
+  if(cOpt==='join'&&code.length!==6){err.textContent='El código debe tener 6 caracteres';return;}
+  btn.disabled=true;btn.textContent='Creando cuenta...';err.textContent='';
+  const{data,error}=await sb.auth.signUp({email,password:pass});
+  if(error){err.textContent=error.message;btn.disabled=false;btn.textContent='Crear cuenta ♥';return;}
+  if(data.session){
+    const ok=await setupRPC(name,email,cOpt,code);
+    if(!ok){btn.disabled=false;btn.textContent='Crear cuenta ♥';}
+  } else {
+    pendReg={name,email,opt:cOpt,code};
+    err.style.color='var(--blush)';
+    err.textContent='✓ Revisa tu correo, confirma y vuelve a entrar.';
+    btn.disabled=false;btn.textContent='Crear cuenta ♥';
+    setTimeout(()=>switchTab('login'),3000);
+  }
+}
+
+// ── RPC WRAPPER ──────────────────────────────────────
+async function setupRPC(name,email,opt,code){
+  let result,error;
+  if(opt==='create'){
+    ({data:result,error}=await sb.rpc('create_couple',{p_name:name,p_email:email}));
+  } else {
+    ({data:result,error}=await sb.rpc('join_couple',{p_name:name,p_email:email,p_invite_code:code}));
+  }
+  if(error){toast('Error: '+error.message,'err');return false;}
+  if(result?.error){toast(result.error,'err');return false;}
+  return true;
+}
+
+// ── LOGOUT ───────────────────────────────────────────
+async function handleLogout(){
+  if(notifCh)sb.removeChannel(notifCh);
+  await sb.auth.signOut();
+  user=null;profile=null;coupleId=null;booted=false;
+  document.getElementById('app').style.display='none';
+  document.getElementById('authScreen').classList.add('vis');
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=false;btn.textContent='Entrar ♥';
+}
+
+// ── BOOT SEQUENCE ────────────────────────────────────
+async function initAuth(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session?.user){await onSignIn(session.user);}
+  else{hideLoader();document.getElementById('authScreen').classList.add('vis');}
+
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'&&session?.user&&!booted){await onSignIn(session.user);}
+    else if(event==='SIGNED_OUT'){booted=false;}
+  });
+}
+
+async function onSignIn(u){
+  user=u;
+  await loadProfile();
+  if(!profile?.couple_id&&pendReg){
+    await setupRPC(pendReg.name,u.email,pendReg.opt,pendReg.code);
+    pendReg=null;await loadProfile();
+  }
+  if(!booted){booted=true;bootApp();}
+}
+
+async function loadProfile(){
+  const{data}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+  profile=data;coupleId=data?.couple_id??null;
+}
+
+// ── BOOT APP ─────────────────────────────────────────
+function bootApp(){
+  hideLoader();
+  document.getElementById('authScreen').classList.remove('vis');
+  document.getElementById('app').style.display='block';
+  document.getElementById('navName').textContent=profile?.name||user.email;
+  document.getElementById('heroDate').textContent=
+    new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  aplicarLimitesDeFecha();
+
+  if(!coupleId){showSetup();return;}
+
+  initPetals();
+  initCalendar();
+  loadAll();
+  loadNotifs();
+  loadPartner();
+  loadStats();
+  subscribeRT();
+
+  // Auto-refresh signed URLs cada 45 min
+  setInterval(()=>{
+    if(!user||!coupleId)return;
+    if(document.querySelector('.moverlay.open'))return;
+    loadAll();
+  },45*60*1000);
+}
+
+// ── SETUP RECOVERY ───────────────────────────────────
+function showSetup(){
+  if(document.getElementById('setupOv'))return;
+  const el=document.createElement('div');el.className='sov';el.id='setupOv';
+  el.innerHTML=`
+    <div class="modal" style="max-width:400px">
+      <p class="m-ttl">Configura tu espacio</p>
+      <p style="font-size:.73rem;color:var(--muted);margin-bottom:20px;line-height:1.65">
+        Tu cuenta necesita un espacio privado. Crea uno nuevo o únete al de tu pareja con su código.
+      </p>
+      <div class="co-grid">
+        <div class="co-opt active" id="soC" onclick="selSetupOpt('create')">
+          <span class="co-icon">💑</span><span class="co-lbl">Crear espacio</span>
+        </div>
+        <div class="co-opt" id="soJ" onclick="selSetupOpt('join')">
+          <span class="co-icon">🔗</span><span class="co-lbl">Tengo un código</span>
+        </div>
+      </div>
+      <div id="soJF" style="display:none" class="field">
+        <label>Código de invitación</label>
+        <input id="soCode" type="text" maxlength="6" placeholder="ABC123"
+          style="text-transform:uppercase;letter-spacing:.3em;font-size:1.1rem;text-align:center">
+      </div>
+      <button class="btn-p" style="margin-top:12px" onclick="submitSetup()">Confirmar ♥</button>
+      <div class="auth-err" id="soErr"></div>
+    </div>`;
+  document.body.appendChild(el);
+}
+function selSetupOpt(opt){
+  sOpt=opt;
+  document.getElementById('soC').classList.toggle('active',opt==='create');
+  document.getElementById('soJ').classList.toggle('active',opt==='join');
+  document.getElementById('soJF').style.display=opt==='join'?'block':'none';
+}
+async function submitSetup(){
+  const code=(document.getElementById('soCode')?.value||'').trim().toUpperCase();
+  const err=document.getElementById('soErr');
+  if(sOpt==='join'&&code.length!==6){err.textContent='El código debe tener 6 caracteres';return;}
+  err.textContent='';
+  const ok=await setupRPC(profile?.name||user.email,user.email,sOpt,code);
+  if(!ok)return;
+  await loadProfile();
+  document.getElementById('setupOv')?.remove();
+  if(coupleId){
+    aplicarLimitesDeFecha();initPetals();initCalendar();
+    loadAll();loadNotifs();loadPartner();loadStats();subscribeRT();
+  }
+}
+
+// ── INVITE ───────────────────────────────────────────
+async function showInvite(){
+  if(!coupleId){toast('Sin espacio configurado','err');return;}
+  const{data}=await sb.from('couples').select('invite_code').eq('id',coupleId).single();
+  if(data){document.getElementById('invCodeDisp').textContent=data.invite_code;document.getElementById('mInvite').classList.add('open');}
+}
+function copyInvite(){
+  navigator.clipboard.writeText(document.getElementById('invCodeDisp').textContent)
+    .then(()=>toast('Código copiado ♥'));
+}
+
+// CORRECCIÓN: Se eliminan los dos monkey-patches de loadPartner
+// (líneas ~3069 y ~3585) que formaban una cadena de recursión infinita
+// (parche2 → parche1 → parche2 → ∞). Se consolida en una sola función
+// definitiva que hace todo lo que ambos parches intentaban hacer.
+async function loadPartner(){
+  // Lógica original: cargar estado de la pareja
+  const{data}=await sb.from('profiles')
+    .select('name').eq('couple_id',coupleId).neq('id',user.id);
+  const pEl=document.getElementById('pStatus');
+  const tEl=document.getElementById('pStatusTxt');
+  const nav=document.getElementById('navCenter');
+  if(data?.length){
+    const n=data[0].name;
+    pEl.className='pstatus on';
+    tEl.textContent='❤️ Conectado con '+n;
+    nav.innerHTML=`<span class="p-dot on"></span>${n}`;
+  } else {
+    pEl.className='pstatus';
+    tEl.textContent='⏳ Esperando que tu pareja use el código';
+    nav.innerHTML=`<span class="p-dot"></span>Esperando pareja`;
+  }
+  // Extensión 1: cargar config, tema y favoritos
+  await loadConfig();
+  await loadUserFavorites();
+  // Extensión 2: cargar preferencias de notificaciones y verificar push
+  loadNotifPrefs();
+  checkPushPrompt();
+}
+
+// ── STATS ────────────────────────────────────────────
+async function loadStats(){
+  const map=[['messages','stMsg'],['photos','stPho'],['songs','stSng'],['memories','stMem']];
+  await Promise.all(map.map(async([t,id])=>{
+    const{count}=await sb.from(t).select('id',{count:'exact',head:true}).eq('couple_id',coupleId);
+    const el=document.getElementById(id);if(el)el.textContent=count??'0';
+  }));
+}
+
+// ── PETALS ───────────────────────────────────────────
+function initPetals(){
+  const c=document.getElementById('petals');c.innerHTML='';
+  const s=['🌸','✿','❀','♥','✦','❋','·'];
+  for(let i=0;i<22;i++){
+    const p=document.createElement('div');p.className='petal';
+    p.textContent=s[Math.floor(Math.random()*s.length)];
+    Object.assign(p.style,{
+      left:`${Math.random()*100}%`,
+      fontSize:`${.4+Math.random()*.9}rem`,
+      animationDuration:`${9+Math.random()*14}s`,
+      animationDelay:`${Math.random()*11}s`
+    });
+    c.appendChild(p);
+  }
+}
+
+// ── CALENDAR ─────────────────────────────────────────
+function initCalendar(){
+  document.getElementById('calNames').innerHTML=
+    ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+      .map(n=>`<div class="cal-dn">${n}</div>`).join('');
+  renderCal();
+  document.getElementById('calPrev').onclick=()=>{
+    calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCal();};
+  document.getElementById('calNext').onclick=()=>{
+    calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCal();};
+}
+
+function renderCal(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  document.getElementById('calMY').textContent=`${MONTHS[m]} ${y}`;
+  const fd=new Date(y,m,1).getDay(),dm=new Date(y,m+1,0).getDate();
+  const ts=today(),g=document.getElementById('calGrid');
+  g.innerHTML='';
+  for(let i=0;i<fd;i++){const e=document.createElement('div');e.className='cal-cell empty';g.appendChild(e);}
+  for(let d=1;d<=dm;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const info=datesMap[ds]||{};const hasData=Object.keys(info).length>0;
+    const el=document.createElement('div');el.className='cal-cell';
+    if(hasData)el.classList.add('has');
+    if(ds===ts)el.classList.add('today');
+    if(ds===activeDate)el.classList.add('sel');
+    const num=document.createElement('span');num.textContent=d;el.appendChild(num);
+    if(hasData){
+      const dd=document.createElement('div');dd.className='cal-dots';
+      Object.keys(info).forEach(type=>{
+        const dot=document.createElement('div');dot.className='cal-dot';
+        dot.style.background=CAL_CLR[type]||'var(--rose)';dd.appendChild(dot);
+      });
+      el.appendChild(dd);
+    }
+    el.onclick=()=>selDate(ds);
+    g.appendChild(el);
+  }
+}
+
+function selDate(ds){
+  activeDate=ds;renderCal();
+  document.getElementById('fbar').style.display='flex';
+  document.getElementById('fbarDate').textContent=fmtDate(ds);
+  loadAll();
+}
+function clearFilter(){
+  activeDate=null;
+  document.getElementById('fbar').style.display='none';
+  renderCal();loadAll();
+}
+
+async function updateDates(){
+  datesMap={};
+  const tables=['messages','songs','photos','videos','memories'];
+  await Promise.all(tables.map(async t=>{
+    const{data}=await sb.from(t).select('date').eq('couple_id',coupleId);
+    if(data)data.forEach(r=>{if(!datesMap[r.date])datesMap[r.date]={};datesMap[r.date][t]=true;});
+  }));
+  renderCal();
+}
+
+// ── SECTION TOGGLE ───────────────────────────────────
+function togSec(key){
+  const c=document.getElementById('sec-'+key);
+  c.classList.toggle('open');c.previousElementSibling.classList.toggle('open');
+}
+
+// ── OPEN MODAL ───────────────────────────────────────
+// CORRECCIÓN: función definitiva consolidada que incluye todos los tipos
+// (msg, song, photo, video, memory, capsule, config).
+// Se elimina el monkey-patch de más abajo que causaba RangeError porque
+// `function openMod` se eleva (hoist) y _origOpenMod capturaba la versión
+// redefinida en lugar de la original.
+function openMod(type,data=null){
+  const tv=today();
+  const safeDate=d=>(d&&d<=tv)?d:tv;
+  if(type==='msg'){
+    document.getElementById('editMsgId').value=data?.id||'';
+    document.getElementById('mMsgTtl').textContent=data?'Editar mensaje':'Nuevo mensaje';
+    document.getElementById('msgDate').value=safeDate(data?.date||activeDate);
+    document.getElementById('msgText').value=data?.text||'';
+    document.getElementById('msgSign').value=data?.signature||'';
+    document.getElementById('mMsg').classList.add('open');
+  } else if(type==='song'){
+    document.getElementById('songDate').value=safeDate(activeDate);
+    ['songTitle','songArtist','songWhy','songUrl'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('mSong').classList.add('open');
+  } else if(type==='photo'){
+    document.getElementById('photoDate').value=safeDate(activeDate);
+    document.getElementById('photoCaption').value='';
+    document.getElementById('photoPrev').innerHTML='';
+    document.getElementById('photoFiles').value='';
+    document.getElementById('photoBar').style.width='0';
+    document.getElementById('mPhoto').classList.add('open');
+  } else if(type==='video'){
+    document.getElementById('videoDate').value=safeDate(activeDate);
+    document.getElementById('videoTitle').value='';
+    document.getElementById('videoUrl').value='';
+    document.getElementById('videoFile').value='';
+    document.getElementById('videoBar').style.width='0';
+    document.getElementById('mVideo').classList.add('open');
+  } else if(type==='memory'){
+    document.getElementById('memDate').value=safeDate(activeDate);
+    document.getElementById('memTitle').value='';
+    document.getElementById('memDesc').value='';
+    document.getElementById('memPrev').innerHTML='';
+    document.getElementById('memFile').value='';
+    document.getElementById('memBar').style.width='0';
+    document.getElementById('mMemory').classList.add('open');
+  } else if(type==='capsule'){
+    const minDate=new Date();minDate.setDate(minDate.getDate()+1);
+    const capDateEl=document.getElementById('capDate');
+    if(capDateEl) capDateEl.min=minDate.toISOString().split('T')[0];
+    document.getElementById('capTitle').value='';
+    document.getElementById('capMsg').value='';
+    if(capDateEl) capDateEl.value='';
+    document.getElementById('mCapsule').classList.add('open');
+  } else if(type==='config'){
+    loadConfig();
+    document.getElementById('mConfig').classList.add('open');
+  }
+}
+
+// ── MESSAGES ─────────────────────────────────────────
+// CORRECCIÓN: renombrada a loadMsgsBase para que loadAll la llame
+// directamente, evitando el monkey-patch recursivo de líneas ~2879-2884.
+async function loadMsgsBase(){
+  hld('msgsList');
+  let q=sb.from('messages').select('id,date,text,signature,author_id,profiles(name)')
+    .eq('couple_id',coupleId).order('date',{ascending:false});
+  if(activeDate)q=q.eq('date',activeDate);
+  const{data}=await q;
+  if(!data?.length){emp('msgsList','Aún no hay mensajes ♥');return;}
+  document.getElementById('msgsList').innerHTML=
+    '<div class="msgs-wrap">'+data.map(m=>`
+    <div class="msg-card">
+      <div class="msg-top">
+        <span class="msg-badge">${fmtDate(m.date)}</span>
+        <div class="msg-actions">
+          <span class="msg-author">por ${m.profiles?.name||'—'}</span>
+          ${m.author_id===user?.id?`
+          <button class="card-act" onclick='openMod("msg",${JSON.stringify({id:m.id,date:m.date,text:m.text,signature:m.signature})})'>✏️</button>
+          <button class="card-act" onclick="del('messages','${m.id}',loadMsgs)">🗑️</button>`:''}
+        </div>
+      </div>
+      <div class="reveal-wrap" onclick="revealMsg(this)">
+        <div class="reveal-overlay">
+          <span class="reveal-icon">♥</span>
+          <span class="reveal-hint">✦ Haz clic para abrir el mensaje ✦</span>
+        </div>
+        <div class="msg-body">
+          <span class="msg-quot">"</span>
+          <p class="msg-text">${m.text}</p>
+          ${m.signature?`<p class="msg-sign">— ${m.signature}</p>`:''}
+        </div>
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+function revealMsg(wrap){
+  const ov=wrap.querySelector('.reveal-overlay');
+  if(ov&&!ov.classList.contains('gone'))ov.classList.add('gone');
+}
+
+async function saveMsg(){
+  const id=document.getElementById('editMsgId').value;
+  const pay={
+    couple_id:coupleId,
+    date:document.getElementById('msgDate').value,
+    text:document.getElementById('msgText').value.trim(),
+    signature:document.getElementById('msgSign').value.trim(),
+    author_id:user.id
+  };
+  if(!pay.text){toast('Escribe algo hermoso ♥','err');return;}
+  const{error}=id
+    ?await sb.from('messages').update(pay).eq('id',id)
+    :await sb.from('messages').insert(pay);
+  if(error){toast(error.message,'err');return;}
+  toast(id?'Mensaje actualizado ♥':'Mensaje guardado ♥');
+  closeMod('mMsg');loadMsgs();updateDates();loadStats();
+}
+
+// ── SONGS ────────────────────────────────────────────
+async function loadSongs(){
+  hld('songsList');
+  let q=sb.from('songs').select('id,date,title,artist,why,spotify_url,author_id,profiles(name)')
+    .eq('couple_id',coupleId).order('date',{ascending:false});
+  if(activeDate)q=q.eq('date',activeDate);
+  const{data}=await q;
+  if(!data?.length){emp('songsList','Aún no hay canciones ♪');return;}
+  document.getElementById('songsList').innerHTML=
+    '<div class="songs-list">'+data.map((s,i)=>`
+    <div class="song-row">
+      <span class="song-num">${String(i+1).padStart(2,'0')}</span>
+      <div class="song-art">🎵</div>
+      <div class="song-info">
+        <div class="song-nm">${s.title}</div>
+        <div class="song-ar">${s.artist}</div>
+      </div>
+      <div class="song-why">${s.why||''}</div>
+      ${s.spotify_url?`<a class="song-link" href="${s.spotify_url}" target="_blank">▶ Escuchar</a>`:''}
+      ${s.author_id===user?.id?`<button class="card-act" onclick="del('songs','${s.id}',loadSongs)">🗑️</button>`:''}
+    </div>`).join('')+'</div>';
+}
+
+async function saveSong(){
+  const pay={
+    couple_id:coupleId,date:document.getElementById('songDate').value,
+    title:document.getElementById('songTitle').value.trim(),
+    artist:document.getElementById('songArtist').value.trim(),
+    why:document.getElementById('songWhy').value.trim(),
+    spotify_url:document.getElementById('songUrl').value.trim()||null,
+    author_id:user.id
+  };
+  if(!pay.title||!pay.artist){toast('Título y artista son requeridos','err');return;}
+  const{error}=await sb.from('songs').insert(pay);
+  if(error){toast(error.message,'err');return;}
+  toast('Canción guardada ♥');closeMod('mSong');loadSongs();updateDates();loadStats();
+}
+
+// ── PHOTOS ───────────────────────────────────────────
+function prevPhotos(){
+  const files=document.getElementById('photoFiles').files;
+  const prev=document.getElementById('photoPrev');prev.innerHTML='';
+  Array.from(files).forEach(f=>{
+    if(!chkFile(f,'img'))return;
+    const img=document.createElement('img');img.className='up-thumb';
+    img.src=URL.createObjectURL(f);prev.appendChild(img);
+  });
+}
+
+async function loadPhotos(){
+  hld('photosList');
+  let q=sb.from('photos').select('id,date,caption,storage_path,author_id,profiles(name)')
+    .eq('couple_id',coupleId).order('created_at',{ascending:false});
+  if(activeDate)q=q.eq('date',activeDate);
+  const{data}=await q;
+  if(!data?.length){emp('photosList','La galería está vacía 📷');return;}
+  const urls=await Promise.all(data.map(p=>signedUrl('photos',p.storage_path)));
+  document.getElementById('photosList').innerHTML=
+    '<div class="pola-grid">'+data.map((p,i)=>urls[i]?`
+    <div class="polaroid">
+      ${p.author_id===user?.id?`<button class="pola-del" onclick="event.stopPropagation();delPhoto('${p.id}','${p.storage_path}')">✕</button>`:''}
+      <img src="${urls[i]}" alt="${p.caption||''}" loading="lazy"
+        onclick="openLB('${urls[i]}','${(p.caption||'').replace(/'/g,"\\'")}')">
+      <div class="pola-cap">${p.caption||''}</div>
+    </div>`:'').join('')+'</div>';
+}
+
+async function savePhotos(){
+  const files=document.getElementById('photoFiles').files;
+  const date=document.getElementById('photoDate').value;
+  const caption=document.getElementById('photoCaption').value.trim();
+  const bar=document.getElementById('photoBar');
+  if(!files.length){toast('Selecciona al menos una foto','err');return;}
+  const valid=Array.from(files).filter(f=>chkFile(f,'img'));
+  if(!valid.length)return;
+  for(let i=0;i<valid.length;i++){
+    bar.style.width=`${((i+1)/valid.length)*90}%`;
+    const f=valid[i],ext=f.name.split('.').pop();
+    const path=`${coupleId}/${user.id}/${uid()}.${ext}`;
+    const{error:ue}=await sb.storage.from('photos').upload(path,f,{contentType:f.type});
+    if(ue){toast('Error subiendo '+f.name,'err');continue;}
+    await sb.from('photos').insert({couple_id:coupleId,date,caption,storage_path:path,author_id:user.id});
+  }
+  bar.style.width='100%';
+  toast('Fotos subidas ♥');closeMod('mPhoto');loadPhotos();updateDates();loadStats();
+  setTimeout(()=>{bar.style.width='0';},600);
+}
+
+async function delPhoto(id,path){
+  if(!confirm('¿Eliminar esta foto?'))return;
+  await sb.storage.from('photos').remove([path]);
+  await sb.from('photos').delete().eq('id',id);
+  toast('Foto eliminada');loadPhotos();loadStats();
+}
+
+function openLB(url,cap){
+  document.getElementById('lbImg').src=url;
+  document.getElementById('lbCap').textContent=cap;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLB(){document.getElementById('lightbox').classList.remove('open');}
+
+// ── VIDEOS ───────────────────────────────────────────
+async function loadVideos(){
+  hld('videosList');
+  let q=sb.from('videos').select('id,date,title,url,storage_path,author_id,profiles(name)')
+    .eq('couple_id',coupleId).order('date',{ascending:false});
+  if(activeDate)q=q.eq('date',activeDate);
+  const{data}=await q;
+  if(!data?.length){emp('videosList','Aún no hay videos 🎬');return;}
+  const sm={};
+  await Promise.all(data.filter(v=>v.storage_path).map(async v=>{sm[v.id]=await signedUrl('videos',v.storage_path);}));
+  document.getElementById('videosList').innerHTML=
+    '<div class="vids-list">'+data.map(v=>{
+      const lnk=v.url||(sm[v.id]||null);
+      return`<div class="vid-row">
+        <div class="vid-icon">🎬</div>
+        <div class="vid-info">
+          <div class="vid-ttl">${v.title}</div>
+          <div class="vid-meta">${fmtDate(v.date)} · por ${v.profiles?.name||'—'}</div>
+        </div>
+        ${lnk?`<a href="${lnk}" target="_blank" class="vid-link">Ver ▶</a>`:''}
+        ${v.author_id===user?.id?`<button class="card-act" onclick="del('videos','${v.id}',loadVideos)">🗑️</button>`:''}
+      </div>`;
+    }).join('')+'</div>';
+}
+
+async function saveVideo(){
+  const title=document.getElementById('videoTitle').value.trim();
+  const url=document.getElementById('videoUrl').value.trim();
+  const date=document.getElementById('videoDate').value;
+  const file=document.getElementById('videoFile').files[0];
+  if(!title){toast('El título es requerido','err');return;}
+  let storage_path=null;
+  if(file&&!url){
+    if(!chkFile(file,'vid'))return;
+    const ext=file.name.split('.').pop();
+    const path=`${coupleId}/${user.id}/${uid()}.${ext}`;
+    const bar=document.getElementById('videoBar');bar.style.width='50%';
+    const{error:ue}=await sb.storage.from('videos').upload(path,file,{contentType:file.type});
+    if(ue){toast(ue.message,'err');return;}
+    bar.style.width='100%';storage_path=path;
+    setTimeout(()=>{bar.style.width='0';},600);
+  }
+  const{error}=await sb.from('videos').insert(
+    {couple_id:coupleId,date,title,url:url||null,storage_path,author_id:user.id});
+  if(error){toast(error.message,'err');return;}
+  toast('Video guardado ♥');closeMod('mVideo');loadVideos();updateDates();
+}
+
+// ── MEMORIES ─────────────────────────────────────────
+function prevMem(){
+  const f=document.getElementById('memFile').files[0];
+  if(!f||!chkFile(f,'img'))return;
+  const prev=document.getElementById('memPrev');prev.innerHTML='';
+  const img=document.createElement('img');img.className='up-thumb';
+  img.src=URL.createObjectURL(f);prev.appendChild(img);
+}
+
+async function loadMems(){
+  hld('memoriesList');
+  let q=sb.from('memories').select('id,date,title,description,storage_path,author_id,profiles(name)')
+    .eq('couple_id',coupleId).order('date',{ascending:false});
+  if(activeDate)q=q.eq('date',activeDate);
+  const{data}=await q;
+  if(!data?.length){emp('memoriesList','Aún no hay recuerdos 🌹');return;}
+  const urls=await Promise.all(data.map(m=>m.storage_path?signedUrl('memories',m.storage_path):null));
+  document.getElementById('memoriesList').innerHTML=
+    '<div class="timeline">'+data.map((m,i)=>`
+    <div class="tl-item" style="animation-delay:${i*.065}s">
+      <div class="tl-pip"><div class="tl-dot" style="animation-delay:${i*.065}s"></div></div>
+      <div class="tl-card" style="animation-delay:${i*.065}s">
+        <div class="tl-date">${fmtDate(m.date)}</div>
+        <div class="tl-ttl">${m.title}</div>
+        ${m.description?`<div class="tl-desc">${m.description}</div>`:''}
+        ${urls[i]?`<img class="tl-img" src="${urls[i]}" alt="${m.title}" loading="lazy"
+          onclick="openLB('${urls[i]}','${m.title.replace(/'/g,"\\'")}')">` :''}
+        <div class="tl-author">por ${m.profiles?.name||'—'}</div>
+        ${m.author_id===user?.id?`
+        <div class="tl-acts">
+          <button class="card-act" onclick="del('memories','${m.id}',loadMems)">🗑️ Eliminar</button>
+        </div>`:''}
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+async function saveMemory(){
+  const title=document.getElementById('memTitle').value.trim();
+  const desc=document.getElementById('memDesc').value.trim();
+  const date=document.getElementById('memDate').value;
+  const file=document.getElementById('memFile').files[0];
+  if(!title){toast('El título es requerido','err');return;}
+  let storage_path=null;
+  if(file){
+    if(!chkFile(file,'img'))return;
+    const ext=file.name.split('.').pop();
+    const path=`${coupleId}/${user.id}/${uid()}.${ext}`;
+    const bar=document.getElementById('memBar');bar.style.width='50%';
+    const{error:ue}=await sb.storage.from('memories').upload(path,file,{contentType:file.type});
+    if(ue){toast(ue.message,'err');return;}
+    bar.style.width='100%';storage_path=path;
+    setTimeout(()=>{bar.style.width='0';},600);
+  }
+  const{error}=await sb.from('memories').insert(
+    {couple_id:coupleId,date,title,description:desc,storage_path,author_id:user.id});
+  if(error){toast(error.message,'err');return;}
+  toast('Recuerdo guardado ♥');closeMod('mMemory');loadMems();updateDates();loadStats();
+}
+
+// ── DELETE ───────────────────────────────────────────
+async function del(table,id,reload){
+  if(!confirm('¿Eliminar este elemento?'))return;
+  const{error}=await sb.from(table).delete().eq('id',id);
+  if(error){toast(error.message,'err');return;}
+  toast('Eliminado');reload();loadStats();
+}
+
+// ── NOTIFICATIONS ────────────────────────────────────
+async function loadNotifs(){
+  const{data}=await sb.from('notifications')
+    .select('*,from:from_user_id(name)')
+    .eq('to_user_id',user.id).eq('couple_id',coupleId)
+    .order('created_at',{ascending:false}).limit(30);
+  renderNotifs(data||[]);
+}
+
+function renderNotifs(data){
+  const unread=data.filter(n=>!n.read).length;
+  document.getElementById('notifBadge').style.display=unread>0?'block':'none';
+  const list=document.getElementById('notifList');
+  if(!data.length){
+    list.innerHTML='<div class="notif-empty"><span class="notif-empty-ico">🔔</span>Sin notificaciones</div>';return;
+  }
+  const lbl={
+    messages:'❤️ Tu pareja escribió un mensaje',
+    songs:'🎵 Tu pareja compartió una canción',
+    photos:'📸 Tu pareja subió una foto',
+    videos:'🎬 Tu pareja agregó un video',
+    memories:'🌹 Tu pareja guardó un recuerdo'
+  };
+  list.innerHTML=data.map(n=>`
+    <div class="notif-item ${n.read?'':'unread'}">
+      <div class="notif-type">${lbl[n.type]||'Nueva actividad'}</div>
+      <div class="notif-pre">${n.content_preview||''}</div>
+      <div class="notif-time">${new Date(n.created_at)
+        .toLocaleDateString('es-MX',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`).join('');
+}
+
+async function markAllRead(){
+  await sb.rpc('mark_notifications_read');
+  document.getElementById('notifBadge').style.display='none';
+  loadNotifs();
+}
+
+function toggleNotifs(){
+  const p=document.getElementById('notifPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open'))loadNotifs();
+}
+
+// CORRECCIÓN: Se reemplaza el monkey-patch de subscribeRT que no llamaba
+// a _origSubscribeRT (dejando canales Supabase sin cerrar y duplicando
+// notificaciones). Ahora subscribeRT es una sola función definitiva
+// que incluye el toast original Y las notificaciones flotantes/push.
+function subscribeRT(){
+  if(notifCh)sb.removeChannel(notifCh);
+  notifCh=sb.channel('nt_'+user.id)
+    .on('postgres_changes',{
+      event:'INSERT',schema:'public',table:'notifications',
+      filter:`to_user_id=eq.${user.id}`
+    },payload=>{
+      document.getElementById('notifBadge').style.display='block';
+      const n = payload.new;
+      const lbl={messages:'Mensaje',songs:'Canción',photos:'Foto',videos:'Video',memories:'Recuerdo'};
+      const icons={messages:'❤️',songs:'🎵',photos:'📸',videos:'🎬',memories:'🌹'};
+      const typeLabel = lbl[n.type]||'Contenido';
+      const icon = icons[n.type]||'♥';
+      const title = `${icon} Nueva actividad`;
+      const body  = n.content_preview
+        ? `Tu pareja compartió: ${n.content_preview}`
+        : `Tu pareja agregó ${typeLabel.toLowerCase()}`;
+      // Toast en app
+      toast(`${icon} Tu pareja compartió: ${typeLabel}`);
+      // Notificación flotante (si prefs lo permiten)
+      showFloatNotif(title, body);
+      // Push del navegador (si habilitado)
+      sendBrowserNotif(`${icon} Para Ti, Mi Amor`, body);
+      // Invalidar caché del día
+      if(n.created_at){
+        const dateKey = n.created_at.split('T')[0];
+        delete dayDataCache[dateKey];
+      }
+    })
+    .subscribe();
+}
+
+// ── LOAD ALL ─────────────────────────────────────────
+// NOTA: loadAll se define completamente más abajo (sección "HOOK INTO BOOT")
+// incluyendo todas las secciones. Esta definición temporal es sobreescrita.
+function loadAll(){
+  loadMsgsBase();loadSongs();loadPhotos();loadVideos();loadMems();updateDates();
+}
+
+// ── ARRANCAR ─────────────────────────────────────────
+initAuth();
+
+// ═══════════════════════════════════════════════════
+// NUEVAS FEATURES — agregan funcionalidad sin romper nada
+// ═══════════════════════════════════════════════════
+
+// ── ESTADO NUEVO ────────────────────────────────────
+let coupleConfig   = null;   // { anniversary_date, theme, couple_name }
+let userFavorites  = new Set(); // "table:uuid" strings
+let allContent     = [];        // para sorpréndeme
+
+// ── TEMA VISUAL ──────────────────────────────────────
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme === 'wine' ? '' : theme);
+  document.getElementById('themeOpts')?.classList.remove('open');
+  localStorage.setItem('pti_theme', theme);
+  // Guardar en Supabase si hay sesión
+  if(coupleId)(async()=>{ await sb.rpc('upsert_couple_config',{p_theme:theme}); })();
+}
+
+function toggleThemePicker(){
+  document.getElementById('themeOpts')?.classList.toggle('open');
+}
+
+function loadSavedTheme(){
+  const saved = coupleConfig?.theme || localStorage.getItem('pti_theme') || 'wine';
+  applyTheme(saved);
+  const sel = document.getElementById('cfgTheme');
+  if(sel) sel.value = saved;
+}
+
+// Cerrar theme picker al click fuera
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.theme-picker'))
+    document.getElementById('themeOpts')?.classList.remove('open');
+});
+
+// ── CONFIGURACIÓN DE PAREJA ──────────────────────────
+async function loadConfig(){
+  if(!coupleId) return;
+  const {data} = await sb.from('couple_config')
+    .select('*').eq('couple_id',coupleId).maybeSingle();
+  coupleConfig = data;
+  if(data){
+    loadSavedTheme();
+    updateDaysCounter();
+    // Actualizar nombre en hero si está configurado
+    if(data.couple_name){
+      const el = document.querySelector('.hero-eye');
+      if(el) el.textContent = `✦ ${data.couple_name} ✦`;
+    }
+  } else {
+    loadSavedTheme();
+  }
+  // Llenar form de config
+  const cfgName = document.getElementById('cfgName');
+  const cfgAnniv = document.getElementById('cfgAnniv');
+  const cfgTheme = document.getElementById('cfgTheme');
+  if(cfgName && data?.couple_name) cfgName.value = data.couple_name;
+  if(cfgAnniv && data?.anniversary_date) cfgAnniv.value = data.anniversary_date;
+  if(cfgTheme && data?.theme) cfgTheme.value = data.theme;
+}
+
+async function saveConfig(){
+  const name = document.getElementById('cfgName')?.value?.trim();
+  const anniv = document.getElementById('cfgAnniv')?.value;
+  const theme = document.getElementById('cfgTheme')?.value || 'wine';
+  await sb.rpc('upsert_couple_config',{
+    p_couple_name: name||null,
+    p_anniversary_date: anniv||null,
+    p_theme: theme
+  });
+  toast('Configuración guardada ♥');
+  closeMod('mConfig');
+  await loadConfig();
+  updateDaysCounter();
+}
+
+// ── CONTADOR DE DÍAS ─────────────────────────────────
+function updateDaysCounter(){
+  const anniv = coupleConfig?.anniversary_date;
+  const el = document.getElementById('daysCounter');
+  const numEl = document.getElementById('daysNum');
+  const detailEl = document.getElementById('daysDetail');
+  if(!anniv || !el) return;
+
+  const start = new Date(anniv + 'T12:00:00');
+  const now   = new Date();
+  const diffMs= now - start;
+  if(diffMs < 0){ el.style.display = 'none'; return; }
+
+  const days  = Math.floor(diffMs / (1000*60*60*24));
+  const years = Math.floor(days / 365);
+  const months= Math.floor((days % 365) / 30);
+  const remDays = days % 30;
+
+  el.style.display = 'block';
+  numEl.textContent = days.toLocaleString('es-MX');
+
+  let detail = '';
+  if(years > 0) detail += `<span>${years}</span> año${years!==1?'s':''} `;
+  if(months > 0) detail += `<span>${months}</span> mes${months!==1?'es':''} `;
+  detail += `<span>${remDays}</span> día${remDays!==1?'s':''}`;
+  detailEl.innerHTML = detail;
+}
+
+// ── SORPRÉNDEME ──────────────────────────────────────
+async function loadAllContent(){
+  if(!coupleId || allContent.length > 0) return;
+  const results = await Promise.all([
+    sb.from('messages').select('id,date,text,signature').eq('couple_id',coupleId),
+    sb.from('songs').select('id,date,title,artist,why,spotify_url').eq('couple_id',coupleId),
+    sb.from('photos').select('id,date,caption,storage_path').eq('couple_id',coupleId),
+    sb.from('videos').select('id,date,title,url').eq('couple_id',coupleId),
+    sb.from('memories').select('id,date,title,description,storage_path').eq('couple_id',coupleId)
+  ]);
+  const types = ['messages','songs','photos','videos','memories'];
+  allContent = [];
+  results.forEach((r,i)=>{
+    if(r.data) r.data.forEach(item=>allContent.push({type:types[i],...item}));
+  });
+}
+
+async function openSurprise(){
+  await loadAllContent();
+  if(!allContent.length){ toast('Aún no hay contenido para sorprenderte ♥','err'); return; }
+  document.getElementById('surpriseOverlay').classList.add('open');
+  loadSurprise();
+}
+
+async function loadSurprise(){
+  if(!allContent.length) return;
+  const item = allContent[Math.floor(Math.random()*allContent.length)];
+  const typeLabels={messages:'💌 Mensaje',songs:'🎵 Canción',photos:'📷 Foto',videos:'🎬 Video',memories:'🌹 Recuerdo'};
+  document.getElementById('surpriseType').textContent = typeLabels[item.type]||item.type;
+  document.getElementById('surpriseDate').textContent = fmtDate(item.date);
+
+  const cont = document.getElementById('surpriseContent');
+  if(item.type==='messages'){
+    cont.innerHTML=`<div class="surprise-content-text">"${item.text}"</div>${item.signature?`<p style="color:var(--muted);font-size:.8rem;margin-top:6px">— ${item.signature}</p>`:''}`;
+  } else if(item.type==='songs'){
+    cont.innerHTML=`<div class="surprise-content-text">${item.title}</div><p style="color:var(--muted);font-size:.85rem">${item.artist}</p>${item.why?`<p style="color:var(--blush);font-size:.8rem;font-style:italic;margin-top:8px">"${item.why}"</p>`:''}${item.spotify_url?`<a href="${item.spotify_url}" target="_blank" class="song-link" style="margin-top:12px;display:inline-flex">▶ Escuchar</a>`:''}`;
+  } else if(item.type==='photos' && item.storage_path){
+    cont.innerHTML='<div style="color:var(--muted);font-size:.8rem">Cargando foto...</div>';
+    const url = await signedUrl('photos',item.storage_path);
+    if(url) cont.innerHTML=`<img class="surprise-img" src="${url}" alt="${item.caption||''}"><p style="color:var(--muted);font-size:.75rem;margin-top:8px;font-style:italic">${item.caption||''}</p>`;
+  } else if(item.type==='memories'){
+    cont.innerHTML=`<div class="surprise-content-text">${item.title}</div>${item.description?`<p style="color:var(--muted);font-size:.8rem;margin-top:6px">${item.description}</p>`:''}`;
+    if(item.storage_path){
+      const url = await signedUrl('memories',item.storage_path);
+      if(url) cont.innerHTML+=`<img class="surprise-img" src="${url}" style="margin-top:12px">`;
+    }
+  } else if(item.type==='videos'){
+    cont.innerHTML=`<div class="surprise-content-text">${item.title}</div>${item.url?`<a href="${item.url}" target="_blank" class="vid-link" style="display:inline-flex;margin-top:12px">Ver ▶</a>`:''}`;
+  } else {
+    cont.innerHTML=`<div class="surprise-content-text">${item.title||item.text||'Recuerdo especial'}</div>`;
+  }
+}
+
+function closeSurprise(){
+  document.getElementById('surpriseOverlay').classList.remove('open');
+}
+
+// ── HOY HACE... (ON THIS DAY) ────────────────────────
+async function loadOnThisDay(){
+  if(!coupleId) return;
+  const now = new Date();
+  const month = String(now.getMonth()+1).padStart(2,'0');
+  const day   = String(now.getDate()).padStart(2,'0');
+  const pattern = `%-${month}-${day}`;
+
+  const tables = [
+    {t:'messages',  icon:'💌', label:'mensajes', textField:'text'},
+    {t:'photos',    icon:'📷', label:'fotos',    textField:'caption'},
+    {t:'songs',     icon:'🎵', label:'canciones',textField:'title'},
+    {t:'memories',  icon:'🌹', label:'recuerdos',textField:'title'},
+  ];
+
+  const results = await Promise.all(tables.map(({t})=>
+    sb.from(t).select('id,date,text,title,caption,artist').eq('couple_id',coupleId)
+      .like('date',pattern).neq('date',now.toISOString().split('T')[0])
+  ));
+
+  const items = [];
+  tables.forEach(({t,icon,textField},i)=>{
+    const rows = results[i].data||[];
+    rows.forEach(row=>{
+      const rowDate = new Date(row.date+'T12:00:00');
+      const yearsAgo = now.getFullYear() - rowDate.getFullYear();
+      const monthsAgo= yearsAgo*12 + (now.getMonth()-rowDate.getMonth());
+      if(yearsAgo < 1 && monthsAgo < 1) return; // menos de 1 mes: no mostrar
+      const ago = yearsAgo>=1
+        ? `Hace ${yearsAgo} año${yearsAgo!==1?'s':''}`
+        : `Hace ${monthsAgo} mes${monthsAgo!==1?'es':''}`;
+      const text = row[textField]||row.title||row.text||row.caption||'';
+      items.push({icon, ago, text: text.slice(0,80), type:t});
+    });
+  });
+
+  const section = document.getElementById('otdSection');
+  const list    = document.getElementById('otdList');
+  if(!items.length || !section || !list){ if(section) section.style.display='none'; return; }
+
+  section.style.display='block';
+  list.innerHTML = items.map(it=>`
+    <div class="otd-card sr">
+      <div class="otd-icon">${it.icon}</div>
+      <div class="otd-info">
+        <div class="otd-ago">${it.ago}</div>
+        <div class="otd-text">${it.text}</div>
+      </div>
+    </div>`).join('');
+  initScrollReveal();
+}
+
+// ── FAVORITOS ────────────────────────────────────────
+async function loadUserFavorites(){
+  if(!coupleId) return;
+  const {data} = await sb.from('favorites')
+    .select('table_name,content_id').eq('user_id',user.id).eq('couple_id',coupleId);
+  userFavorites = new Set((data||[]).map(f=>`${f.table_name}:${f.content_id}`));
+}
+
+function isFav(table,id){ return userFavorites.has(`${table}:${id}`); }
+
+async function toggleFav(table,id,btn){
+  const {data} = await sb.rpc('toggle_favorite',{p_table_name:table,p_content_id:id});
+  if(data?.action==='added'){
+    userFavorites.add(`${table}:${id}`);
+    btn.classList.add('active'); btn.textContent='⭐';
+    toast('Marcado como favorito ⭐');
+    allContent = []; // reset cache
+  } else {
+    userFavorites.delete(`${table}:${id}`);
+    btn.classList.remove('active'); btn.textContent='☆';
+    toast('Eliminado de favoritos');
+  }
+}
+
+function favBtn(table,id){
+  const active = isFav(table,id);
+  return `<button class="fav-btn ${active?'active':''}" title="Favorito"
+    onclick="event.stopPropagation();toggleFav('${table}','${id}',this)">${active?'⭐':'☆'}</button>`;
+}
+
+async function loadFavorites(){
+  hld('favsList');
+  if(!coupleId){ emp('favsList','Sin favoritos aún'); return; }
+  const {data} = await sb.from('favorites')
+    .select('*').eq('couple_id',coupleId).order('created_at',{ascending:false});
+  if(!data?.length){ emp('favsList','Aún no hay favoritos ⭐'); return; }
+
+  // Cargar contenido de cada favorito
+  const grouped = {};
+  data.forEach(f=>{ if(!grouped[f.table_name]) grouped[f.table_name]=[]; grouped[f.table_name].push(f.content_id); });
+
+  const typeLabels={messages:'💌 Mensajes',songs:'🎵 Canciones',photos:'📷 Fotos',videos:'🎬 Videos',memories:'🌹 Recuerdos'};
+  let html = '';
+  for(const [table,ids] of Object.entries(grouped)){
+    const {data:rows} = await sb.from(table).select('*,profiles(name)').in('id',ids).eq('couple_id',coupleId);
+    if(!rows?.length) continue;
+    html += `<div style="margin-bottom:24px">
+      <p style="font-size:.62rem;letter-spacing:.28em;text-transform:uppercase;color:var(--rose);margin-bottom:12px">${typeLabels[table]||table}</p>`;
+    if(table==='messages'){
+      html += rows.map(m=>`
+        <div class="msg-card" style="margin-bottom:10px">
+          <div class="msg-top">
+            <span class="msg-badge">${fmtDate(m.date)}</span>
+            <div class="msg-actions">${favBtn(table,m.id)}</div>
+          </div>
+          <div class="reveal-wrap" onclick="revealMsg(this)">
+            <div class="reveal-overlay"><span class="reveal-icon">♥</span><span class="reveal-hint">✦ Haz clic para leer ✦</span></div>
+            <div class="msg-body"><span class="msg-quot">"</span><p class="msg-text">${m.text}</p></div>
+          </div>
+        </div>`).join('');
+    } else if(table==='songs'){
+      html += '<div class="songs-list">' + rows.map((s,i)=>`
+        <div class="song-row">
+          <span class="song-num">${String(i+1).padStart(2,'0')}</span>
+          <div class="song-art">🎵</div>
+          <div class="song-info"><div class="song-nm">${s.title}</div><div class="song-ar">${s.artist}</div></div>
+          ${s.why?`<div class="song-why">${s.why}</div>`:''}
+          ${s.spotify_url?`<a class="song-link" href="${s.spotify_url}" target="_blank">▶</a>`:''}
+          ${favBtn(table,s.id)}
+        </div>`).join('') + '</div>';
+    } else if(table==='photos'){
+      const urls = await Promise.all(rows.map(p=>signedUrl('photos',p.storage_path)));
+      html += '<div class="pola-grid">' + rows.map((p,i)=>urls[i]?`
+        <div class="polaroid">
+          <img src="${urls[i]}" onclick="openLB('${urls[i]}','${(p.caption||'').replace(/'/g,"\\'")}')">
+          <div class="pola-cap">${p.caption||''}</div>
+        </div>`:'').join('') + '</div>';
+    } else if(table==='memories'){
+      const urls = await Promise.all(rows.map(m=>m.storage_path?signedUrl('memories',m.storage_path):null));
+      html += '<div class="timeline">' + rows.map((m,i)=>`
+        <div class="tl-item">
+          <div class="tl-pip"><div class="tl-dot"></div></div>
+          <div class="tl-card">
+            <div class="tl-date">${fmtDate(m.date)}</div>
+            <div class="tl-ttl">${m.title}</div>
+            ${m.description?`<div class="tl-desc">${m.description}</div>`:''}
+            ${urls[i]?`<img class="tl-img" src="${urls[i]}" onclick="openLB('${urls[i]}','${m.title.replace(/'/g,"\\'")}')">` :''}
+            ${favBtn(table,m.id)}
+          </div>
+        </div>`).join('') + '</div>';
+    } else if(table==='videos'){
+      html += '<div class="vids-list">' + rows.map(v=>`
+        <div class="vid-row">
+          <div class="vid-icon">🎬</div>
+          <div class="vid-info"><div class="vid-ttl">${v.title}</div><div class="vid-meta">${fmtDate(v.date)}</div></div>
+          ${v.url?`<a href="${v.url}" target="_blank" class="vid-link">Ver ▶</a>`:''}
+          ${favBtn(table,v.id)}
+        </div>`).join('') + '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('favsList').innerHTML = html || `<div class="es"><span class="es-heart">♥</span><p>Sin favoritos aún</p></div>`;
+}
+
+// CORRECCIÓN: El monkey-patch anterior (const _origLoadMsgs = loadMsgs)
+// causaba recursión infinita porque _origLoadMsgs capturaba la versión
+// ya redefinida. Se reemplaza con una función limpia que llama a loadMsgsBase.
+async function loadMsgs(){
+  await loadMsgsBase();
+  setTimeout(()=>injectFavBtns('messages'), 100);
+}
+
+// ── REACCIONES ────────────────────────────────────────
+const EMOJIS = ['❤️','😍','🥰','😭','😂','✨'];
+let reactionsCache = {}; // contentId -> [{emoji, user_id, profiles:{name}}]
+
+async function loadReactions(table, ids){
+  if(!ids.length) return;
+  const {data} = await sb.from('reactions')
+    .select('*,profiles(name)').eq('table_name',table).in('content_id',ids).eq('couple_id',coupleId);
+  reactionsCache = {};
+  (data||[]).forEach(r=>{
+    if(!reactionsCache[r.content_id]) reactionsCache[r.content_id]=[];
+    reactionsCache[r.content_id].push(r);
+  });
+}
+
+function reactionsHTML(table,id){
+  const all = reactionsCache[id]||[];
+  const grouped = {};
+  all.forEach(r=>{ if(!grouped[r.emoji]) grouped[r.emoji]={count:0,mine:false}; grouped[r.emoji].count++; if(r.user_id===user?.id) grouped[r.emoji].mine=true; });
+
+  let btns = EMOJIS.map(e=>{
+    const g = grouped[e]||{count:0,mine:false};
+    return `<button class="reaction-btn ${g.mine?'mine':''}"
+      onclick="toggleReact('${table}','${id}','${e}',this)">${e}${g.count>0?`<span class="reaction-count">${g.count}</span>`:''}</button>`;
+  }).join('');
+  return `<div class="reactions-bar">${btns}</div>`;
+}
+
+async function toggleReact(table,id,emoji,btn){
+  const {data,error} = await sb.rpc('toggle_reaction',{p_table_name:table,p_content_id:id,p_emoji:emoji});
+  if(error){ toast(error.message,'err'); return; }
+  // Refresh reactions for this item
+  const bar = btn.closest('.reactions-bar');
+  if(!bar) return;
+  const {data:fresh} = await sb.from('reactions').select('*').eq('table_name',table).eq('content_id',id).eq('couple_id',coupleId);
+  const grouped={};
+  (fresh||[]).forEach(r=>{ if(!grouped[r.emoji]) grouped[r.emoji]={count:0,mine:false}; grouped[r.emoji].count++; if(r.user_id===user?.id) grouped[r.emoji].mine=true; });
+  bar.innerHTML = EMOJIS.map(e=>{
+    const g=grouped[e]||{count:0,mine:false};
+    return `<button class="reaction-btn ${g.mine?'mine':''}" onclick="toggleReact('${table}','${id}','${e}',this)">${e}${g.count>0?`<span class="reaction-count">${g.count}</span>`:''}</button>`;
+  }).join('');
+}
+
+// ── INJECT FAV BUTTONS (non-destructive) ─────────────────────
+function injectFavBtns(table){
+  // Called after render, finds card-act containers and injects fav btn
+  // This is a best-effort injection; main render includes them for new loads
+}
+
+// ── CÁPSULA DEL TIEMPO ───────────────────────────────
+async function loadCapsules(){
+  hld('capsulesList');
+  if(!coupleId){ emp('capsulesList','Sin cápsulas'); return; }
+  const today_str = today();
+  // Visible: abiertas (ya pasó fecha) o propias (siempre visible para ver que enviaste)
+  const {data} = await sb.from('time_capsules')
+    .select('*,profiles(name)').eq('couple_id',coupleId)
+    .order('open_date',{ascending:true});
+  if(!data?.length){ emp('capsulesList','💌 No hay cartas del futuro aún'); return; }
+  document.getElementById('capsulesList').innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:12px">'+data.map(c=>{
+      const locked = c.open_date > today_str && c.author_id !== user?.id;
+      const isOpen = c.open_date <= today_str;
+      const openDate = fmtDate(c.open_date);
+      if(locked){
+        // Cuenta regresiva
+        const d = new Date(c.open_date+'T12:00:00');
+        const days = Math.max(0,Math.ceil((d-new Date())/(1000*60*60*24)));
+        return `<div class="capsule-card locked">
+          <span class="capsule-lock">🔒</span>
+          <div class="capsule-open-date">Abre el ${openDate}</div>
+          <div class="capsule-title">${c.title}</div>
+          <div class="capsule-countdown">Faltan ${days} día${days!==1?'s':''} para abrirla ✨</div>
+          <div style="font-size:.65rem;color:var(--muted);margin-top:8px">por ${c.profiles?.name||'—'}</div>
+        </div>`;
+      }
+      return `<div class="capsule-card">
+        ${isOpen?'<span style="font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--green);margin-bottom:6px;display:block">💚 Desbloqueada</span>':''}
+        <div class="capsule-open-date">${isOpen?'Abierta el':'Abre el'} ${openDate}</div>
+        <div class="capsule-title">${c.title}</div>
+        <div class="capsule-msg">${c.message}</div>
+        <div style="font-size:.65rem;color:var(--muted);margin-top:10px">por ${c.profiles?.name||'—'}</div>
+        ${c.author_id===user?.id?`<button class="card-act" style="margin-top:8px" onclick="del('time_capsules','${c.id}',loadCapsules)">🗑️ Eliminar</button>`:''}
+      </div>`;
+    }).join('')+'</div>';
+}
+
+async function saveCapsule(){
+  const title = document.getElementById('capTitle')?.value?.trim();
+  const msg   = document.getElementById('capMsg')?.value?.trim();
+  const date  = document.getElementById('capDate')?.value;
+  if(!title||!msg){ toast('Escribe un título y mensaje','err'); return; }
+  if(!date||date<=today()){ toast('Elige una fecha futura','err'); return; }
+  const {error} = await sb.from('time_capsules').insert(
+    {couple_id:coupleId,author_id:user.id,title,message:msg,open_date:date});
+  if(error){ toast(error.message,'err'); return; }
+  toast('Cápsula sellada 💌');
+  closeMod('mCapsule');
+  loadCapsules();
+}
+
+// ── LOGROS ────────────────────────────────────────────
+async function loadAchievements(){
+  hld('achievementsList');
+  if(!coupleId) return;
+  const [msgs,photos,songs,mems,vids] = await Promise.all([
+    sb.from('messages').select('id',{count:'exact',head:true}).eq('couple_id',coupleId),
+    sb.from('photos').select('id',{count:'exact',head:true}).eq('couple_id',coupleId),
+    sb.from('songs').select('id',{count:'exact',head:true}).eq('couple_id',coupleId),
+    sb.from('memories').select('id',{count:'exact',head:true}).eq('couple_id',coupleId),
+    sb.from('videos').select('id',{count:'exact',head:true}).eq('couple_id',coupleId)
+  ]);
+  const c = {msgs:msgs.count||0,photos:photos.count||0,songs:songs.count||0,mems:mems.count||0,vids:vids.count||0};
+  const hasAnniv = !!coupleConfig?.anniversary_date;
+  const daysTogether = hasAnniv ? Math.floor((new Date()-new Date(coupleConfig.anniversary_date+'T12:00:00'))/(1000*60*60*24)) : 0;
+
+  const achievements = [
+    {icon:'💌',name:'Primer mensaje',unlocked:c.msgs>=1},
+    {icon:'📷',name:'Primera foto',unlocked:c.photos>=1},
+    {icon:'🎵',name:'Primera canción',unlocked:c.songs>=1},
+    {icon:'🌹',name:'Primer recuerdo',unlocked:c.mems>=1},
+    {icon:'🎬',name:'Primer video',unlocked:c.vids>=1},
+    {icon:'💌',name:'10 mensajes',unlocked:c.msgs>=10},
+    {icon:'💌',name:'50 mensajes',unlocked:c.msgs>=50},
+    {icon:'💌',name:'100 mensajes',unlocked:c.msgs>=100},
+    {icon:'📷',name:'10 fotos',unlocked:c.photos>=10},
+    {icon:'📷',name:'50 fotos',unlocked:c.photos>=50},
+    {icon:'📷',name:'100 fotos',unlocked:c.photos>=100},
+    {icon:'🎵',name:'10 canciones',unlocked:c.songs>=10},
+    {icon:'🌹',name:'10 recuerdos',unlocked:c.mems>=10},
+    {icon:'❤️',name:'1 mes juntos',unlocked:daysTogether>=30},
+    {icon:'❤️',name:'3 meses juntos',unlocked:daysTogether>=90},
+    {icon:'❤️',name:'6 meses juntos',unlocked:daysTogether>=180},
+    {icon:'🏆',name:'Primer aniversario',unlocked:daysTogether>=365},
+    {icon:'👑',name:'2 años juntos',unlocked:daysTogether>=730},
+  ];
+
+  const unlocked = achievements.filter(a=>a.unlocked).length;
+  document.getElementById('achievementsList').innerHTML =
+    `<p style="font-size:.7rem;color:var(--muted);margin-bottom:20px">${unlocked} / ${achievements.length} logros desbloqueados</p>
+    <div class="achievements-grid">`+
+    achievements.map(a=>`
+      <div class="achievement ${a.unlocked?'unlocked':''}">
+        <span class="achievement-icon">${a.icon}</span>
+        <span class="achievement-name">${a.name}</span>
+        ${a.unlocked?'<span style="font-size:.55rem;color:var(--gold);letter-spacing:.15em;display:block;margin-top:4px">✓ DESBLOQUEADO</span>':''}
+      </div>`).join('') + '</div>';
+}
+
+// ── SCROLL REVEAL ─────────────────────────────────────
+// CORRECCIÓN: observer creado una sola vez (singleton) en lugar de
+// crear uno nuevo en cada evento scroll, lo que causaba fuga de memoria.
+let _scrollRevealObs = null;
+function initScrollReveal(){
+  if(!_scrollRevealObs){
+    _scrollRevealObs = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('vis'); _scrollRevealObs.unobserve(e.target); }});
+    },{threshold:0.1});
+  }
+  document.querySelectorAll('.sr:not(.vis)').forEach(el=>_scrollRevealObs.observe(el));
+}
+
+// ── EMBED MEDIA (YouTube / Spotify) ───────────────────
+function getEmbedHtml(url){
+  if(!url) return '';
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if(ytMatch) return `<div class="media-embed"><iframe height="200" src="https://www.youtube.com/embed/${ytMatch[1]}" allowfullscreen></iframe></div>`;
+  // Spotify track/playlist
+  const spMatch = url.match(/open\.spotify\.com\/(track|playlist|album|episode)\/([a-zA-Z0-9]+)/);
+  if(spMatch) return `<div class="media-embed"><iframe height="${spMatch[1]==='track'?80:160}" src="https://open.spotify.com/embed/${spMatch[1]}/${spMatch[2]}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe></div>`;
+  return '';
+}
+
+// ── HOOK INTO BOOT ────────────────────────────────────
+// CORRECCIÓN: Se elimina el monkey-patch de loadAll porque generaba
+// recursión infinita (_origLoadAll capturaba la versión redefinida).
+// En su lugar, loadAll ya se redefine aquí de forma definitiva,
+// incluyendo todas las secciones nuevas y las originales directamente.
+function loadAll(){
+  loadMsgsBase();
+  loadSongs();
+  loadPhotos();
+  loadVideos();
+  loadMems();
+  updateDates();
+  loadCapsules();
+  loadFavorites();
+  loadAchievements();
+  loadOnThisDay();
+}
+
+// CORRECCIÓN: monkey-patch de loadPartner eliminado.
+// La función ya incluye loadConfig() y loadUserFavorites() directamente.
+
+// CORRECCIÓN: monkey-patch de openMod eliminado.
+// capsule y config ya están incluidos en openMod directamente arriba.
+
+// Scroll reveal on initial page load
+window.addEventListener('load',()=>setTimeout(initScrollReveal,500));
+document.addEventListener('scroll',initScrollReveal,{passive:true});
+
+
+// ═══════════════════════════════════════════════════
+// VISTA DÍA — DIARIO COMPLETO DE UN DÍA
+// ═══════════════════════════════════════════════════
+
+let currentDayDate = null;
+let dayDataCache   = {};  // date -> {messages,photos,songs,videos,memories}
+
+// Override selDate to open day view instead of filtering
+// Store original
+const _origSelDate = typeof selDate === 'function' ? selDate : null;
+
+function selDate(ds){
+  // Still update activeDate for backward compatibility
+  activeDate = ds;
+  renderCal();
+  // But instead of filter-in-page, open day view
+  openDayView(ds);
+}
+
+function clearFilter(){
+  activeDate = null;
+  const fb = document.getElementById('fbar');
+  if(fb) fb.style.display = 'none';
+  renderCal();
+  // Don't call loadAll() — just close day view if open
+  closeDayView();
+}
+
+async function openDayView(dateStr){
+  currentDayDate = dateStr;
+  const overlay  = document.getElementById('dayOverlay');
+  if(!overlay) return;
+
+  // Set header date
+  const d = new Date(dateStr+'T12:00:00');
+  document.getElementById('dayHeaderDate').textContent = fmtDate(dateStr);
+
+  // Check if this day has historical parallels
+  const now = new Date();
+  const yearsAgo = now.getFullYear() - d.getFullYear();
+  if(yearsAgo > 0){
+    document.getElementById('dayHeaderSub').textContent =
+      `Hace ${yearsAgo} año${yearsAgo>1?'s':''} ✨`;
+  } else {
+    document.getElementById('dayHeaderSub').textContent = 'Reviviendo este día ✨';
+  }
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Reset tabs to "all"
+  switchDayTab('all');
+  document.getElementById('day-all').innerHTML =
+    '<div class="hld"><div class="hld-h">♥</div><div class="hld-t">Viajando en el tiempo...</div></div>';
+
+  await loadDayData(dateStr);
+}
+
+function closeDayView(){
+  const overlay = document.getElementById('dayOverlay');
+  if(overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  currentDayDate = null;
+}
+
+// ESC key closes day view
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && document.getElementById('dayOverlay')?.classList.contains('open'))
+    closeDayView();
+});
+
+function switchDayTab(tab){
+  document.querySelectorAll('.day-tab').forEach((t,i)=>{
+    const tabs = ['all','messages','photos','songs','videos','memories'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.day-section').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('day-'+tab);
+  if(el) el.classList.add('active');
+}
+
+async function loadDayData(dateStr){
+  if(!coupleId) return;
+
+  // Parallel fetch all content for this day
+  const [msgs, photos, songs, videos, memories] = await Promise.all([
+    sb.from('messages').select('*,profiles(name)').eq('couple_id',coupleId).eq('date',dateStr).order('created_at'),
+    sb.from('photos').select('*,profiles(name)').eq('couple_id',coupleId).eq('date',dateStr).order('created_at'),
+    sb.from('songs').select('*,profiles(name)').eq('couple_id',coupleId).eq('date',dateStr).order('created_at'),
+    sb.from('videos').select('*,profiles(name)').eq('couple_id',coupleId).eq('date',dateStr).order('created_at'),
+    sb.from('memories').select('*,profiles(name)').eq('couple_id',coupleId).eq('date',dateStr).order('created_at'),
+  ]);
+
+  const data = {
+    messages: msgs.data||[],
+    photos:   photos.data||[],
+    songs:    songs.data||[],
+    videos:   videos.data||[],
+    memories: memories.data||[]
+  };
+  dayDataCache[dateStr] = data;
+
+  // Generate signed URLs for photos/memories with storage paths
+  const photoUrls = await Promise.all(data.photos.map(p => signedUrl('photos', p.storage_path)));
+  const memUrls   = await Promise.all(data.memories.map(m => m.storage_path ? signedUrl('memories', m.storage_path) : null));
+
+  // Count pills
+  const total = data.messages.length + data.photos.length + data.songs.length + data.videos.length + data.memories.length;
+  const counts = document.getElementById('dayHeaderCounts');
+  if(counts){
+    const items = [
+      {label:'💌', count:data.messages.length},
+      {label:'📷', count:data.photos.length},
+      {label:'🎵', count:data.songs.length},
+      {label:'🎬', count:data.videos.length},
+      {label:'🌹', count:data.memories.length},
+    ];
+    counts.innerHTML = items.map(i=>
+      `<span class="day-count-pill ${i.count>0?'has':''}">${i.label} ${i.count}</span>`
+    ).join('');
+  }
+
+  // Check for historical parallels (same day/month, different year)
+  const now = new Date();
+  const nowYear = now.getFullYear();
+  const dayMon  = dateStr.slice(5); // MM-DD
+  const historicals = [];
+  for(let yr = nowYear - 1; yr >= nowYear - 5; yr--){
+    const hDate = `${yr}-${dayMon}`;
+    if(hDate === dateStr) continue;
+    const [hm, hp] = await Promise.all([
+      sb.from('messages').select('id,text').eq('couple_id',coupleId).eq('date',hDate).limit(1),
+      sb.from('photos').select('id,caption').eq('couple_id',coupleId).eq('date',hDate).limit(1),
+    ]);
+    const yearsAgo = nowYear - yr;
+    if(hm.data?.length){
+      historicals.push({ago:`Hace ${yearsAgo} año${yearsAgo>1?'s':''}`,text:hm.data[0].text?.slice(0,60),type:'mensaje'});
+    }
+    if(hp.data?.length){
+      historicals.push({ago:`Hace ${yearsAgo} año${yearsAgo>1?'s':''}`,text:hp.data[0].caption||'Una foto especial',type:'foto'});
+    }
+  }
+
+  // Render ALL tab (timeline)
+  renderDayAll(data, photoUrls, memUrls, historicals);
+  renderDayMessages(data.messages);
+  renderDayPhotos(data.photos, photoUrls);
+  renderDaySongs(data.songs);
+  renderDayVideos(data.videos);
+  renderDayMemories(data.memories, memUrls);
+}
+
+function renderDayAll(data, photoUrls, memUrls, historicals){
+  const el = document.getElementById('day-all');
+  const total = data.messages.length + data.photos.length + data.songs.length + data.videos.length + data.memories.length;
+
+  let html = '';
+
+  // Historical memories first
+  if(historicals.length){
+    html += '<div style="margin-bottom:24px">';
+    html += '<p style="font-size:.58rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">✨ En este mismo día...</p>';
+    historicals.forEach(h=>{
+      html += `<div class="day-history">
+        <div class="day-history-icon">${h.type==='foto'?'📷':'❤️'}</div>
+        <div>
+          <div class="day-history-ago">${h.ago}</div>
+          <div class="day-history-text">${h.text}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if(total === 0){
+    el.innerHTML = html + `<div class="day-empty">
+      <span class="day-empty-heart">♥</span>
+      <p class="day-empty-text">No hay recuerdos guardados para este día</p>
+      <button class="day-empty-hint" onclick="closeDayView();openMod('msg')">+ Agregar un recuerdo ♥</button>
+    </div>`;
+    return;
+  }
+
+  // Build unified timeline sorted by created_at
+  const all = [];
+  data.messages.forEach((m,i) => all.push({...m, _type:'messages', _icon:'💌', _i:i}));
+  data.photos.forEach((p,i)   => all.push({...p, _type:'photos',   _icon:'📷', _i:i, _url:photoUrls[i]}));
+  data.songs.forEach((s,i)    => all.push({...s, _type:'songs',    _icon:'🎵', _i:i}));
+  data.videos.forEach((v,i)   => all.push({...v, _type:'videos',   _icon:'🎬', _i:i}));
+  data.memories.forEach((m,i) => all.push({...m, _type:'memories', _icon:'🌹', _i:i, _url:memUrls[i]}));
+  all.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+
+  html += '<div class="day-timeline">';
+  all.forEach((item, idx) => {
+    const time = item.created_at
+      ? new Date(item.created_at).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})
+      : '—';
+    let content = '';
+    if(item._type === 'messages'){
+      content = `<div class="day-msg-card"><div class="reveal-wrap" onclick="revealMsg(this)">
+        <div class="reveal-overlay"><span class="reveal-icon">♥</span><span class="reveal-hint">✦ Clic para leer ✦</span></div>
+        <div class="msg-body"><p class="msg-text">${item.text}</p>${item.signature?`<p class="day-msg-sign">— ${item.signature}</p>`:''}</div>
+      </div></div>`;
+    } else if(item._type === 'photos' && item._url){
+      content = `<div style="margin-bottom:6px"><img src="${item._url}" alt="${item.caption||''}"
+        style="max-width:100%;border-radius:var(--r);cursor:pointer;max-height:260px;object-fit:cover"
+        onclick="openLB('${item._url}','${(item.caption||'').replace(/'/g,"\\'")}')">
+        ${item.caption?`<p style="font-size:.72rem;color:var(--muted);margin-top:5px;font-style:italic">${item.caption}</p>`:''}</div>`;
+    } else if(item._type === 'songs'){
+      const embed = getEmbedHtml(item.spotify_url||'');
+      content = `<div class="song-row" style="margin-bottom:4px">
+        <div class="song-art">🎵</div>
+        <div class="song-info"><div class="song-nm">${item.title}</div><div class="song-ar">${item.artist}</div></div>
+        ${item.why?`<div class="song-why">${item.why}</div>`:''}
+        ${item.spotify_url?`<a class="song-link" href="${item.spotify_url}" target="_blank">▶</a>`:''}
+      </div>${embed}`;
+    } else if(item._type === 'videos'){
+      const embed = getEmbedHtml(item.url||'');
+      content = `<div class="vid-row" style="margin-bottom:4px">
+        <div class="vid-icon">🎬</div>
+        <div class="vid-info"><div class="vid-ttl">${item.title}</div></div>
+        ${item.url?`<a href="${item.url}" target="_blank" class="vid-link">Ver ▶</a>`:''}
+      </div>${embed}`;
+    } else if(item._type === 'memories'){
+      content = `<div class="tl-card" style="margin-bottom:4px">
+        <div class="tl-ttl">${item.title}</div>
+        ${item.description?`<div class="tl-desc">${item.description}</div>`:''}
+        ${item._url?`<img class="tl-img" src="${item._url}" onclick="openLB('${item._url}','${item.title.replace(/'/g,"\\'")}')">` :''}
+      </div>`;
+    }
+    html += `<div class="day-tl-item" style="animation-delay:${idx*.05}s">
+      <div class="day-tl-time">${time}</div>
+      <div class="day-tl-icon">${item._icon}</div>
+      <div class="day-tl-content">
+        <div style="font-size:.58rem;color:var(--muted);margin-bottom:4px;letter-spacing:.1em">${item.profiles?.name||'—'}</div>
+        ${content}
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderDayMessages(messages){
+  const el = document.getElementById('day-messages');
+  if(!messages.length){ el.innerHTML=`<div class="day-empty"><span class="day-empty-heart">♥</span><p class="day-empty-text">Sin mensajes este día</p><button class="day-empty-hint" onclick="closeDayView();openMod('"'"'msg'"'"')">+ Escribir un mensaje</button></div>`; return; }
+  el.innerHTML = messages.map(m=>`
+    <div class="day-msg-card" style="margin-bottom:12px">
+      <div style="font-size:.6rem;color:var(--muted);margin-bottom:8px">por ${m.profiles?.name||'—'}</div>
+      <div class="reveal-wrap" onclick="revealMsg(this)">
+        <div class="reveal-overlay"><span class="reveal-icon">♥</span><span class="reveal-hint">✦ Haz clic para leer ✦</span></div>
+        <div class="msg-body"><span class="msg-quot">"</span><p class="msg-text">${m.text}</p>${m.signature?`<p class="day-msg-sign">— ${m.signature}</p>`:''}</div>
+      </div>
+    </div>`).join('');
+}
+
+async function renderDayPhotos(photos, urls){
+  const el = document.getElementById('day-photos');
+  if(!photos.length){ el.innerHTML=`<div class="day-empty"><span class="day-empty-heart">📷</span><p class="day-empty-text">Sin fotos este día</p></div>`; return; }
+  el.innerHTML = '<div class="day-photos">' +
+    photos.map((p,i)=>urls[i]?`
+    <div class="day-photo">
+      <img src="${urls[i]}" alt="${p.caption||''}" loading="lazy"
+        onclick="openLB('${urls[i]}','${(p.caption||'').replace(/'/g,"\\'")}')">
+      ${p.caption?`<div class="day-photo-cap">${p.caption}</div>`:''}
+    </div>`:'').join('') + '</div>';
+}
+
+function renderDaySongs(songs){
+  const el = document.getElementById('day-songs');
+  if(!songs.length){ el.innerHTML=`<div class="day-empty"><span class="day-empty-heart">🎵</span><p class="day-empty-text">Sin canciones este día</p></div>`; return; }
+  el.innerHTML = '<div class="songs-list">' + songs.map((s,i)=>{
+    const embed = getEmbedHtml(s.spotify_url||'');
+    return `<div>
+      <div class="song-row">
+        <span class="song-num">${String(i+1).padStart(2,'0')}</span>
+        <div class="song-art">🎵</div>
+        <div class="song-info"><div class="song-nm">${s.title}</div><div class="song-ar">${s.artist}</div></div>
+        ${s.why?`<div class="song-why">${s.why}</div>`:''}
+        ${s.spotify_url?`<a class="song-link" href="${s.spotify_url}" target="_blank">▶ Escuchar</a>`:''}
+      </div>${embed}</div>`;
+  }).join('') + '</div>';
+}
+
+function renderDayVideos(videos){
+  const el = document.getElementById('day-videos');
+  if(!videos.length){ el.innerHTML=`<div class="day-empty"><span class="day-empty-heart">🎬</span><p class="day-empty-text">Sin videos este día</p></div>`; return; }
+  el.innerHTML = '<div class="vids-list">' + videos.map(v=>{
+    const embed = getEmbedHtml(v.url||'');
+    return `<div>
+      <div class="vid-row">
+        <div class="vid-icon">🎬</div>
+        <div class="vid-info"><div class="vid-ttl">${v.title}</div><div class="vid-meta">por ${v.profiles?.name||'—'}</div></div>
+        ${v.url?`<a href="${v.url}" target="_blank" class="vid-link">Ver ▶</a>`:''}
+      </div>${embed}</div>`;
+  }).join('') + '</div>';
+}
+
+async function renderDayMemories(memories, urls){
+  const el = document.getElementById('day-memories');
+  if(!memories.length){ el.innerHTML=`<div class="day-empty"><span class="day-empty-heart">🌹</span><p class="day-empty-text">Sin recuerdos este día</p></div>`; return; }
+  el.innerHTML = '<div class="timeline">' + memories.map((m,i)=>`
+    <div class="tl-item">
+      <div class="tl-pip"><div class="tl-dot"></div></div>
+      <div class="tl-card">
+        <div class="tl-ttl">${m.title}</div>
+        ${m.description?`<div class="tl-desc">${m.description}</div>`:''}
+        ${urls[i]?`<img class="tl-img" src="${urls[i]}" onclick="openLB('${urls[i]}','${m.title.replace(/'/g,"\\'")}')">` :''}
+        <div class="tl-author">por ${m.profiles?.name||'—'}</div>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+// ═══════════════════════════════════════════════════
+// PUSH NOTIFICATIONS
+// ═══════════════════════════════════════════════════
+
+const NOTIF_PREFS_KEY = 'pti_notif_prefs';
+
+function getNotifPrefs(){
+  try{ return JSON.parse(localStorage.getItem(NOTIF_PREFS_KEY)||'{}'); } catch(e){ return {}; }
+}
+function saveNotifPrefs(){
+  const prefs = {
+    inApp: document.getElementById('ntInApp')?.checked ?? true,
+    push:  document.getElementById('ntPush')?.checked ?? false,
+    sound: document.getElementById('ntSound')?.checked ?? false,
+  };
+  localStorage.setItem(NOTIF_PREFS_KEY, JSON.stringify(prefs));
+}
+function loadNotifPrefs(){
+  const p = getNotifPrefs();
+  const ntInApp = document.getElementById('ntInApp');
+  const ntPush  = document.getElementById('ntPush');
+  const ntSound = document.getElementById('ntSound');
+  if(ntInApp) ntInApp.checked = p.inApp !== false;
+  if(ntPush)  ntPush.checked  = p.push === true;
+  if(ntSound) ntSound.checked = p.sound === true;
+}
+
+// Check if we should prompt for push
+async function checkPushPrompt(){
+  // Only if browser supports it, not already granted/denied, not dismissed
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'default') return;
+  const dismissed = localStorage.getItem('pti_push_dismissed');
+  if(dismissed) return;
+  // Wait 30 seconds before prompting (non-intrusive)
+  setTimeout(()=>{
+    const prompt = document.getElementById('pushPrompt');
+    if(prompt) prompt.classList.add('show');
+  }, 30000);
+}
+
+async function enablePush(){
+  const prompt = document.getElementById('pushPrompt');
+  if(prompt) prompt.classList.remove('show');
+
+  if(!('Notification' in window)){
+    toast('Tu navegador no soporta notificaciones push','err'); return;
+  }
+
+  const perm = await Notification.requestPermission();
+  if(perm === 'granted'){
+    toast('Notificaciones activadas ♥');
+    const ntPush = document.getElementById('ntPush');
+    if(ntPush){ ntPush.checked = true; saveNotifPrefs(); }
+    localStorage.setItem('pti_push_granted','1');
+    // Register service worker if available
+    registerSW();
+  } else {
+    toast('No se pudieron activar las notificaciones','err');
+  }
+}
+
+function dismissPushPrompt(){
+  const prompt = document.getElementById('pushPrompt');
+  if(prompt) prompt.classList.remove('show');
+  localStorage.setItem('pti_push_dismissed','1');
+}
+
+function togglePushPref(){
+  const ntPush = document.getElementById('ntPush');
+  if(ntPush?.checked){
+    enablePush();
+  } else {
+    saveNotifPrefs();
+    toast('Push notifications desactivadas');
+  }
+}
+
+async function registerSW(){
+  if(!('serviceWorker' in navigator)) return;
+  try{
+    await navigator.serviceWorker.register('/sw-parati.js');
+  } catch(e){
+    // SW not found — that's OK, we'll use in-page notifications
+  }
+}
+
+// Send browser push notification (works when page is open)
+function sendBrowserNotif(title, body){
+  if(!('Notification' in window)) return;
+  if(Notification.permission !== 'granted') return;
+  const prefs = getNotifPrefs();
+  if(!prefs.push) return;
+  new Notification(title, {
+    body,
+    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">♥</text></svg>',
+    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">♥</text></svg>',
+    tag: 'parati-notif',
+  });
+}
+
+// Show in-app floating notification (richer than toast)
+function showFloatNotif(title, body){
+  const prefs = getNotifPrefs();
+  if(!prefs.inApp) return;
+
+  const existing = document.querySelectorAll('.float-notif');
+  existing.forEach(e => e.remove());
+
+  const el = document.createElement('div');
+  el.className = 'float-notif';
+  const time = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  el.innerHTML = `
+    <div class="float-notif-title">${title}</div>
+    <div class="float-notif-body">${body}</div>
+    <div class="float-notif-time">${time}</div>`;
+  document.body.appendChild(el);
+
+  // Play subtle sound if enabled
+  if(prefs.sound) playNotifSound();
+
+  setTimeout(()=>el.remove(), 7000);
+}
+
+function playNotifSound(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.5);
+    osc.start(); osc.stop(ctx.currentTime+0.5);
+  } catch(e){}
+}
+
+// CORRECCIÓN: El monkey-patch de subscribeRT fue eliminado arriba.
+// subscribeRT ya es la versión definitiva consolidada.
+
+// CORRECCIÓN: monkey-patch de loadPartner (notif prefs) eliminado.
+// loadNotifPrefs() y checkPushPrompt() ya están incluidas
+// en la función loadPartner consolidada.
+
+
+</script>
+</body>
+</html>
